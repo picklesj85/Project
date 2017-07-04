@@ -7,19 +7,20 @@
     <title>Instant VC</title>
 
     <link rel="stylesheet" href="CSS/main.css">
+    <script src="Javascript/main.js"></script>
 
 </head>
 <body>
 <div class="center">
 
-    <h1><em>Welcome to Instant VC</em></h1>
+    <h1 class="heading">Welcome to Instant VC</h1>
 
-    <video id="remoteVideoFeed" width="320" height="240" autoplay></video>
+    <!--<video id="remoteVideoFeed" width="320" height="240" autoplay></video>-->
     <video id ="localVideoFeed" width="320" height="240" autoplay></video>
 
     <div>
-        <button id="start">Start Call</button>
-        <button id="join">Join Call</button>
+        <button id="startButton" onclick="start()">Start Call</button>
+        <button id="joinButton">Join Call</button>
     </div>
 
 </div>

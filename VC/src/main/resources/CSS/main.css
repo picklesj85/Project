@@ -1,3 +1,10 @@
+.heading {
+    font-family: Calibri;
+    font-style: oblique;
+    font-weight: bold;
+    color: darkblue;
+}
+
 .center {
     margin: auto;
     width: 75%;
