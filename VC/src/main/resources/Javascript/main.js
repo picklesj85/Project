@@ -2,7 +2,7 @@
 function start() {
     startButton.disabled = true;
     navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: false,
         video: true
     }).then(function(mediaStream) {
         var video = document.getElementById('localVideoFeed');
