@@ -12,3 +12,22 @@ function start() {
         alert(err.name + ": " + err.message);
         })
 }
+
+function webSocketTest() {
+
+    var ws = new WebSocket("ws://192.168.0.3:8080/webSocketTest");
+
+    ws.onopen = function () {
+        alert("WebSocket is open");
+        ws.send("James");
+    };
+
+    ws.onmessage = function (evt) {
+        alert(evt.data);
+    };
+
+    ws.onclose = function () {
+        alert("WebSocket is now closed.");
+    };
+
+}

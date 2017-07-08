@@ -1,6 +1,8 @@
+import akka.http.scaladsl.model.ws.{TextMessage, Message}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.HttpApp
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.stream.scaladsl.{Sink, Flow, Source}
 
 
 object WebServer extends HttpApp with App {
@@ -24,9 +26,21 @@ object WebServer extends HttpApp with App {
       get {
         css
       }
+    } ~
+    path("webSocketTest") {
+      get {
+        handleWebSocketMessages(webSocketHandler)
+      }
     }
 
   }
 
-  WebServer.startServer("localhost", 8080)
+  def webSocketHandler: Flow[Message, Message, Any] = {
+    Flow[Message]
+      .mapConcat {
+        case tm: TextMessage => TextMessage.Streamed(Source.single("Hello ") ++ tm.textStream) :: Nil
+      }
+  }
+
+  WebServer.startServer("192.168.0.3", 8080)
 }
