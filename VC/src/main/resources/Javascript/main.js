@@ -18,7 +18,7 @@ function webSocketTest() {
     var ws = new WebSocket("ws://192.168.0.3:8080/webSocketTest");
 
     ws.onopen = function () {
-        alert("WebSocket is open");
+        //alert("WebSocket is open");
         ws.send("James");
     };
 
