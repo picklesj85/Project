@@ -1,10 +1,12 @@
-import akka.actor.ActorSystem
+import akka.NotUsed
+import akka.actor.{ActorSystem, PoisonPill}
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.HttpApp
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.http.scaladsl.server.Directives._
 
 
 object WebServer extends HttpApp with App {
@@ -17,7 +19,7 @@ object WebServer extends HttpApp with App {
   implicit val materializer = ActorMaterializer()
 
   override def routes: Route = {
-    path("") {
+    pathEndOrSingleSlash {
       get {
         index
       }
@@ -32,27 +34,34 @@ object WebServer extends HttpApp with App {
         css
       }
     } ~
-    path("webSocketTest") {
-      get {
-        handleWebSocketMessages(webSocketHandler)
-      }
+    pathPrefix("webSocket" / IntNumber) {
+      roomID => handleWebSocketMessages(webSocketHandler(roomID))
+    }
+  }
+
+  def webSocketHandler(num: Int): Flow[Message, Message, Any] = {
+
+    val room = OpenRooms.findRoom(num)
+    val moderator = room.roomModerator
+    val sink = Sink.actorRef[MyMessage](moderator, PoisonPill) // is PoisonPill best option here?
+
+    def incoming: Sink[Message, NotUsed] = {
+      Flow[Message].map {
+        case TextMessage.Strict(msg) => MyMessage(msg)
+      }.to(sink)
     }
 
+    def outgoing: Source[Message, _] = {
+      Source.actorRef[MyMessage](10, OverflowStrategy.fail)
+        .mapMaterializedValue(sourceActor => moderator ! sourceActor)
+        .map {
+          case msg: MyMessage => TextMessage(msg.data)
+        }
+    }
+
+    Flow.fromSinkAndSource(incoming, outgoing)
+
   }
 
-  def webSocketHandler: Flow[Message, Message, Any] = {
-    Flow[Message]
-      .mapConcat {
-        case tm: TextMessage => TextMessage(Source.single("Hello ") ++ tm.textStream ++ Source.single("!")) :: Nil
-        //case tm: TextMessage => TextMessage("Hello!") :: Nil
-        //case tm: TextMessage => TextMessage("Hello " + extractUpgradeToWebSocket.toString) :: Nil
-
-        case bm: BinaryMessage =>
-          // ignore binary messages but drain content to avoid the stream being clogged
-          bm.dataStream.runWith(Sink.ignore)
-          Nil
-      }
-  }
-
-  WebServer.startServer("192.168.0.3", 8080)
+  WebServer.startServer("192.168.0.13", 8080)
 }

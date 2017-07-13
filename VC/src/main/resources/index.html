@@ -20,7 +20,10 @@
 
     <div>
         <button id="startButton" onclick="start()">Start Call</button>
-        <button id="joinButton" onclick="webSocketTest()">Join Call</button>
+        <button id="joinButton" onclick="">Join Call</button>
+        <br>
+        <form>Send Message: <input type="text" id="msg">
+        <input type="button" value="Send" onclick="webSocketTest(document.getElementById('msg'.valueOf()))"></form>
     </div>
 
 </div>

@@ -13,13 +13,13 @@ function start() {
         })
 }
 
-function webSocketTest() {
+function webSocketTest(msg) {
 
-    var ws = new WebSocket("ws://192.168.0.3:8080/webSocketTest");
+    var ws = new WebSocket("ws://192.168.0.13:8080/webSocket/1");
 
     ws.onopen = function () {
         //alert("WebSocket is open");
-        ws.send("James");
+        ws.send(msg.value);
     };
 
     ws.onmessage = function (evt) {
