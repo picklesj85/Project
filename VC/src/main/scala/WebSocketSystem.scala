@@ -1,5 +1,8 @@
 
+import java.util.UUID
+
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+
 
 class Room(roomID: Int, actorSystem: ActorSystem) {
 
@@ -9,9 +12,16 @@ class Room(roomID: Int, actorSystem: ActorSystem) {
     override def receive = {
       case m: MyMessage => roomMembers.foreach(_ ! m)
 
-      case ar: ActorRef => roomMembers += ar
+      case ar: ActorRef => {
+        roomMembers += ar
+        //self ! MyMessage(s"Welcome to room $roomID!")
+        if (roomID != Int.MaxValue) ar ! MyMessage(s"Welcome to room $roomID!")
+        else ar ! MyMessage("The Room ID entered does not exist.")
+      }
     }
   }))
+
+  def getID = roomID
 
 //  def broadcast(msg: Message) = {
 //    // roomModerator ! Message(message)
@@ -29,14 +39,23 @@ case class MyMessage(data: String)
 
 object OpenRooms {
 
+  var IDcount = 0
+
   var openRooms: Map[Int, Room] = Map.empty[Int, Room]
 
   def findRoom(roomID: Int)(implicit actorSystem: ActorSystem) = {
     if (openRooms.contains(roomID)) openRooms(roomID)
     else {
-      val newRoom = new Room(roomID, actorSystem)
-      openRooms += roomID -> newRoom
-      newRoom
+      // create a fake room to relay message that the room ID entered is invalid.
+      val fakeRoom = new Room(Int.MaxValue, actorSystem)
+      fakeRoom
     }
+  }
+
+  def createRoom()(implicit actorSystem: ActorSystem) = {
+    IDcount += 1
+    val newRoom = new Room(IDcount, actorSystem)
+    openRooms += IDcount -> newRoom
+    newRoom
   }
 }

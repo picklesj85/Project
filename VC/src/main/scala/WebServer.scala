@@ -41,8 +41,9 @@ object WebServer extends HttpApp with App {
 
   def webSocketHandler(num: Int): Flow[Message, Message, Any] = {
 
-    val room = OpenRooms.findRoom(num)
+    val room = if (num == 0) OpenRooms.createRoom() else OpenRooms.findRoom(num)
     val moderator = room.roomModerator
+    println(room.getID)
     val sink = Sink.actorRef[MyMessage](moderator, PoisonPill) // is PoisonPill best option here?
 
     def incoming: Sink[Message, NotUsed] = {
@@ -64,4 +65,5 @@ object WebServer extends HttpApp with App {
   }
 
   WebServer.startServer("192.168.0.13", 8080)
+  system.terminate()
 }

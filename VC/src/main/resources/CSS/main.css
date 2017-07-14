@@ -12,3 +12,18 @@
     padding: 50px;
     text-align: center;
 }
+
+.sent_box {
+    display: block;
+    clear: both;
+}
+
+.sent_box span {
+    float: left;
+}
+
+.received_box span {
+    float: right;
+}
+
+
