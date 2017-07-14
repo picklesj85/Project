@@ -5,6 +5,13 @@
     color: darkblue;
 }
 
+.roomNumber {
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: bold;
+    color: black;
+}
+
 .center {
     margin: auto;
     width: 75%;

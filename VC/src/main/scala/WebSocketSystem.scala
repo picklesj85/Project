@@ -15,7 +15,10 @@ class Room(roomID: Int, actorSystem: ActorSystem) {
       case ar: ActorRef => {
         roomMembers += ar
         //self ! MyMessage(s"Welcome to room $roomID!")
-        if (roomID != Int.MaxValue) ar ! MyMessage(s"Welcome to room $roomID!")
+        if (roomID != Int.MaxValue) {
+          ar ! MyMessage(roomID.toString)
+          ar ! MyMessage(s"Welcome to room $roomID!")
+        }
         else ar ! MyMessage("The Room ID entered does not exist.")
       }
     }

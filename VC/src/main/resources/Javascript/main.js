@@ -22,7 +22,11 @@ function start() {
     };
 
     webSocketConnection.onmessage = function (evt) {
-        alert(evt.data);
+        if (isNaN(evt.data)) {
+            alert(evt.data);
+        } else {
+            document.getElementById('roomNumber').innerHTML = "You are in room " + evt.data;
+        }
         return false;
     };
 
@@ -41,7 +45,11 @@ function join() {
     };
 
     webSocketConnection.onmessage = function (evt) {
-        alert(evt.data);
+        if (isNaN(evt.data)) {
+            alert(evt.data);
+        } else {
+            document.getElementById('roomNumber').innerHTML = "You are in room " + evt.data;
+        }
         return false;
     };
 
@@ -62,6 +70,7 @@ function webSocketTest(msg) {
     webSocketConnection.onmessage = function (evt) {
         //alert(evt.data);
         document.getElementById('sent').innerHTML = evt.data;
+        return false;
     };
 
     webSocketConnection.onclose = function () {
