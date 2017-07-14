@@ -9,7 +9,7 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.http.scaladsl.server.Directives._
 
 
-object WebServer extends HttpApp with App {
+object WebServer extends HttpApp {
 
   def index = getFromResource("index.html")
   def css = getFromResource("CSS/main.css")
@@ -70,6 +70,11 @@ object WebServer extends HttpApp with App {
 
   }
 
-  WebServer.startServer("192.168.0.13", 8080)
-  system.terminate()
+  def main(args: Array[String]): Unit = {
+    WebServer.startServer("192.168.0.13", 8080)
+    system.terminate()
+  }
+
 }
+
+
