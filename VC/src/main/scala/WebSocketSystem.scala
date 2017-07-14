@@ -1,7 +1,8 @@
 
-import java.util.UUID
-
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+
+
+case class MyMessage(data: String)
 
 
 class Room(roomID: Int, actorSystem: ActorSystem) {
@@ -14,7 +15,6 @@ class Room(roomID: Int, actorSystem: ActorSystem) {
 
       case ar: ActorRef => {
         roomMembers += ar
-        //self ! MyMessage(s"Welcome to room $roomID!")
         if (roomID != Int.MaxValue) {
           ar ! MyMessage(roomID.toString)
           ar ! MyMessage(s"Welcome to room $roomID!")
@@ -25,19 +25,7 @@ class Room(roomID: Int, actorSystem: ActorSystem) {
   }))
 
   def getID = roomID
-
-//  def broadcast(msg: Message) = {
-//    // roomModerator ! Message(message)
-//    roomMembers.foreach(_ ! msg)
-//  }
-
-//  def join(actorRef: ActorRef) = {
-//    roomMembers += actorRef
-//  }
 }
-
-case class MyMessage(data: String)
-
 
 
 object OpenRooms {

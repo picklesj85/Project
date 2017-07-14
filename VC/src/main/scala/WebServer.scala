@@ -49,7 +49,7 @@ object WebServer extends HttpApp {
 
     val room = if (num == 0) OpenRooms.createRoom() else OpenRooms.findRoom(num)
     val moderator = room.roomModerator
-    println(room.getID)
+
     val sink = Sink.actorRef[MyMessage](moderator, PoisonPill) // is PoisonPill best option here?
 
     def incoming: Sink[Message, NotUsed] = {
