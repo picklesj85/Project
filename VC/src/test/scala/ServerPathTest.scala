@@ -12,7 +12,8 @@ import akka.util.ByteString
 
 import scala.concurrent.duration._
 
-class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
+class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
+
 
   def ws = WebServer.routes
 
