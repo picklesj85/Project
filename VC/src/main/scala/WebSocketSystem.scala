@@ -3,23 +3,25 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 
 
 case class MyMessage(data: String)
+case class User(name: String, actorRef: ActorRef)
 
 
 class Room(roomID: Int, actorSystem: ActorSystem) {
 
-  var roomMembers: Set[ActorRef] = Set.empty[ActorRef]
+  var roomMembers: Set[User] = Set.empty[User]
 
   val roomModerator = actorSystem.actorOf(Props(new Actor {
     override def receive = {
-      case m: MyMessage => roomMembers.foreach(_ ! m)
+      case m: MyMessage => roomMembers.foreach(member => member.actorRef ! m)
 
-      case ar: ActorRef => {
-        roomMembers += ar
+      case user: User => {
         if (roomID != Int.MaxValue) {
-          ar ! MyMessage(roomID.toString)
-          ar ! MyMessage(s"Welcome to room $roomID!")
+          roomMembers.foreach(member => user.actorRef ! MyMessage("user" + member.name))
+          roomMembers += user
+          user.actorRef ! MyMessage(roomID.toString)
+          user.actorRef ! MyMessage(s"Welcome to room $roomID!")
         }
-        else ar ! MyMessage("The Room ID entered does not exist.")
+        else user.actorRef ! MyMessage("The Room ID entered does not exist.")
       }
     }
   }))

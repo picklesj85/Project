@@ -20,7 +20,20 @@
     text-align: center;
 }
 
+.attendees {
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: normal;
+    color: black;
+}
 
+.attendeeList {
+    font-family: Calibri;
+    font-style: italic;
+    font-weight: normal;
+    color: black;
+    list-style-type: none;
+}
 
 
 

@@ -41,11 +41,14 @@ object WebServer extends HttpApp {
       }
     } ~
     pathPrefix("webSocket" / IntNumber) {
-      roomID => handleWebSocketMessages(webSocketHandler(roomID))
+      roomID =>
+        parameter('name) { user =>
+          handleWebSocketMessages(webSocketHandler(roomID, user))
+        }
     }
   }
 
-  def webSocketHandler(num: Int): Flow[Message, Message, Any] = {
+  def webSocketHandler(num: Int, name: String): Flow[Message, Message, Any] = {
 
     val room = if (num == 0) OpenRooms.createRoom() else OpenRooms.findRoom(num)
     val moderator = room.roomModerator
@@ -60,7 +63,7 @@ object WebServer extends HttpApp {
 
     def outgoing: Source[Message, _] = {
       Source.actorRef[MyMessage](10, OverflowStrategy.fail)
-        .mapMaterializedValue(sourceActor => moderator ! sourceActor)
+        .mapMaterializedValue(sourceActor => moderator ! User(name, sourceActor))
         .map {
           case msg: MyMessage => TextMessage(msg.data)
         }
@@ -71,7 +74,7 @@ object WebServer extends HttpApp {
   }
 
   def main(args: Array[String]): Unit = {
-    WebServer.startServer("192.168.0.13", 8080)
+    WebServer.startServer("192.168.0.21", 8080)
     system.terminate()
   }
 
