@@ -51,13 +51,13 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
   }
 
   test("test the webSocket path 0 to create new room") {
-    WS("/webSocket/0", wsClient1Room1.flow) ~> ws ~> check {
+    WS("/webSocket/0?name=Alice", wsClient1Room1.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
       wsClient1Room1.expectMessage("1")
 
-      wsClient1Room1.expectMessage("Welcome to room 1!")
+      wsClient1Room1.expectMessage("Welcome to Room 1!")
 
       assert(OpenRooms.openRooms.contains(1))
 
@@ -71,14 +71,16 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
   }
 
   test("different client joining same room") {
-    WS("/webSocket/1", wsClient2Room1.flow) ~> ws ~> check {
+    WS("/webSocket/1?name=James", wsClient2Room1.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
+
+      wsClient2Room1.expectMessage("userAlice")
 
       wsClient2Room1.expectMessage("1")
       wsClient1Room1.expectNoMessage(100.millis)
 
-      wsClient2Room1.expectMessage("Welcome to room 1!")
+      wsClient2Room1.expectMessage("Welcome to Room 1!")
       wsClient1Room1.expectNoMessage(100.millis)
 
       wsClient2Room1.sendMessage("hello")
@@ -90,7 +92,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
 
   test("client joining non existing room") {
     val webSocketClient = WSProbe()
-    WS("/webSocket/5008", webSocketClient.flow) ~> ws ~> check {
+    WS("/webSocket/5008?name=test", webSocketClient.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
@@ -102,13 +104,13 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
   }
 
   test("client creates another new room") {
-    WS("/webSocket/0", wsClient1Room2.flow) ~> ws ~> check {
+    WS("/webSocket/0?name=Sam", wsClient1Room2.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
       wsClient1Room2.expectMessage("2")
 
-      wsClient1Room2.expectMessage("Welcome to room 2!")
+      wsClient1Room2.expectMessage("Welcome to Room 2!")
 
       assert(OpenRooms.openRooms.contains(2))
 
@@ -119,14 +121,16 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
   }
 
   test("client joins room 2") {
-    WS("/webSocket/2", wsClient2Room2.flow) ~> ws ~> check {
+    WS("/webSocket/2?name=Fred", wsClient2Room2.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
+
+      wsClient2Room2.expectMessage("userSam")
 
       wsClient2Room2.expectMessage("2")
       wsClient1Room2.expectNoMessage(100.millis)
 
-      wsClient2Room2.expectMessage("Welcome to room 2!")
+      wsClient2Room2.expectMessage("Welcome to Room 2!")
       wsClient1Room2.expectNoMessage(100.millis)
 
       assert(OpenRooms.openRooms.size == 2) // should now be 2 rooms
@@ -139,15 +143,18 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest {
   }
 
   test("three clients in a room") {
-    WS("/webSocket/2", wsClient3Room2.flow) ~> ws ~> check {
+    WS("/webSocket/2?name=Sarah", wsClient3Room2.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
+
+      wsClient3Room2.expectMessage("userSam")
+      wsClient3Room2.expectMessage("userFred")
 
       wsClient3Room2.expectMessage("2")
       wsClient1Room2.expectNoMessage(100.millis)
       wsClient2Room2.expectNoMessage(100.millis)
 
-      wsClient3Room2.expectMessage("Welcome to room 2!")
+      wsClient3Room2.expectMessage("Welcome to Room 2!")
       wsClient1Room2.expectNoMessage(100.millis)
       wsClient2Room2.expectNoMessage(100.millis)
 
