@@ -14,7 +14,8 @@ object WebServer extends HttpApp {
   def index = getFromResource("index.html")
   def css = getFromResource("CSS/main.css")
   def js = getFromResource("Javascript/main.js")
-  def jquery = getFromResource("Javascript/jquery-3.2.1.js")
+  def jquery = getFromResource("Javascript/lib/jquery-3.2.1.js")
+  def adapter = getFromResource("Javascript/lib/adapter.js")
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
@@ -38,6 +39,11 @@ object WebServer extends HttpApp {
     path("jquery") {
       get {
         jquery
+      }
+    } ~
+    path("adapter") {
+      get {
+       adapter
       }
     } ~
     pathPrefix("webSocket" / IntNumber) {

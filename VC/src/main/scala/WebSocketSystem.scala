@@ -1,5 +1,8 @@
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
+import akka.event.LoggingReceive
+
+import scala.util.parsing.json.JSON
 
 
 case class MyMessage(data: String)
@@ -11,22 +14,25 @@ case class Room(roomID: Int, actorSystem: ActorSystem) {
 
 }
 
-class RoomModerator(room: Room) extends Actor {
+class RoomModerator(room: Room) extends Actor with ActorLogging {
 
   var roomMembers: Set[User] = Set.empty[User]
   val roomID = room.roomID
 
   override def receive = {
-    case m: MyMessage => roomMembers.foreach(member => member.actorRef ! m)
+    LoggingReceive {
+      case m: MyMessage => roomMembers.foreach(member => member.actorRef ! m)
+        log.info(m.data)
 
-    case user: User => {
-      if (roomID != Int.MaxValue) {
-        roomMembers.foreach(member => user.actorRef ! MyMessage("user" + member.name))
-        roomMembers += user
-        user.actorRef ! MyMessage(roomID.toString)
-        user.actorRef ! MyMessage(s"Welcome to Room $roomID!")
+      case user: User => {
+        if (roomID != Int.MaxValue) {
+          roomMembers.foreach(member => user.actorRef ! MyMessage("user" + member.name))
+          roomMembers += user
+          user.actorRef ! MyMessage("ID" + roomID.toString)
+          user.actorRef ! MyMessage(s"Welcome to Room $roomID!")
+        }
+        else user.actorRef ! MyMessage("The Room ID entered does not exist.")
       }
-      else user.actorRef ! MyMessage("The Room ID entered does not exist.")
     }
   }
 }

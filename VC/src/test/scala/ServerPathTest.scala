@@ -47,7 +47,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   test("jquery path returns jquery") {
     Get("/jquery") ~> ws ~> check {
       status shouldBe OK
-      responseAs[String] shouldEqual Source.fromResource("Javascript/jquery-3.2.1.js").mkString
+      responseAs[String] shouldEqual Source.fromResource("Javascript/lib/jquery-3.2.1.js").mkString
     }
   }
 
