@@ -68,7 +68,7 @@ object WebServer extends HttpApp {
     }
 
     def outgoing: Source[Message, _] = {
-      Source.actorRef[MyMessage](10, OverflowStrategy.fail)
+      Source.actorRef[MyMessage](50, OverflowStrategy.fail)
         .mapMaterializedValue(sourceActor => moderator ! User(name, sourceActor))
         .map {
           case msg: MyMessage => TextMessage(msg.data)

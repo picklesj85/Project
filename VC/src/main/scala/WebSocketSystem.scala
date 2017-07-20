@@ -21,8 +21,12 @@ class RoomModerator(room: Room) extends Actor with ActorLogging {
 
   override def receive = {
     LoggingReceive {
-      case m: MyMessage => roomMembers.foreach(member => member.actorRef ! m)
-        log.info(m.data)
+      case m: MyMessage =>
+        //if (roomMembers.size > 1)  // otherwise just sending to self
+          roomMembers.foreach(member => member.actorRef ! m)
+          log.info(m.data)
+
+
 
       case user: User => {
         if (roomID != Int.MaxValue) {
