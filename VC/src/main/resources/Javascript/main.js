@@ -206,12 +206,12 @@ function startWebSocket() {
                 break;
 
             case "roomID":
+                if(msg.caller) {
+                    caller = true;
+                }
                 $room.html("You are in Room " + msg.roomID.toString());
                 $title.append(" " + msg.roomID.toString());
                 break;
-
-            case "ready":
-
 
             case "offer":
                 receivedOffer(msg);
