@@ -2,6 +2,7 @@
 
 var IPAddress = "192.168.0.21:8080";
 var userName;
+var roomID;
 var wsURL;
 var webSocketConnection = null;
 
@@ -11,20 +12,23 @@ var SDPOffer;
 var SDPAnswer = "not yet defined";
 var caller;
 var gotAnswer = false;
-var otherUserPresent = false;
+var otherUserPresent = false; // redundant?
+var callEnded = false;
 
 
 var constraints = {video: true, audio: true};
 
 //var startButton = document.getElementById('startButton');
 
-function startCall() {
-
-    caller = true;
-
-    newConnection();
-
+function start() {
+    var ready = {
+        tag: "ready",
+        user: userName
+    };
+    msgServer(ready);
 }
+
+
 
 function getMedia() {
 
@@ -37,10 +41,31 @@ function getMedia() {
         localMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
             localPC.addTrack(track, localMediaStream)
         });
+        localVideoFeed.onloadedmetadata = function () {
+            prepareWebSocket();
+        }
     }).catch(function (err) {
         alert(err.name + ": " + err.message + "\n\n in startCall() getUserMedia()");
         console.log(err);
     });
+    
+    //prepareWebSocket();
+}
+
+function prepareWebSocket() {
+
+    let params = (new URL(document.location)).searchParams;
+    userName = params.get("userName");
+    roomID = params.get("roomID");
+
+    console.log("User: " + userName + "\nRoom: " + roomID);
+
+    wsURL = "ws://" + IPAddress + "/webSocket/" + roomID + "?name=" + userName;
+
+    newConnection();
+
+    startWebSocket();
+
 }
 
 function startNegotiating() {
@@ -48,7 +73,7 @@ function startNegotiating() {
         return localPC.setLocalDescription(offer);
     }).then(function () {
         SDPOffer = {
-            type: "offer",
+            tag: "offer",
             user: userName,
             sdp: localPC.localDescription
         };
@@ -58,45 +83,16 @@ function startNegotiating() {
         alert(err.name + ": " + err.message + "\n\n in startNegotiating()");
         console.log(err);
     });
-}
 
-function start() {
-   // startButton.disabled = true; // test if this working
-
-    userName = prompt("Please enter you name: ");
-
-    if (userName === null) {
-        location.reload();
-    }
-
-    wsURL = "ws://" + IPAddress + "/webSocket/0?name=" + userName;
-
-    startWebSocket();
-
-    startCall();
-
-}
-
-function join() {
-
-    userName = prompt("Please enter your name: ");
-
-    if (userName === null) {
-        location.reload();
-    }
-
-    var roomID = prompt("Please enter the ID of call to join: ");
-
-    if (roomID === null) {
-        location.reload();
-    }
-
-    wsURL = "ws://" + IPAddress + "/webSocket/" + roomID + "?name=" + userName;
-
-    startWebSocket();
-
-
-
+    localPC.onnegotiationneeded = startNegotiating;
+    
+    // setTimeout(function () {
+    //     if (!gotAnswer) {
+    //         localPC.close();
+    //         webSocketConnection.close();
+    //         getMedia();
+    //     }
+    // }, 3000);
 }
 
 function receivedOffer(offer) {
@@ -117,7 +113,7 @@ function receivedOffer(offer) {
         return localPC.setLocalDescription(answer);
     }).then(function () {
         SDPAnswer = {
-            type: "answer",
+            tag: "answer",
             user: userName,
             sdp: localPC.localDescription
         };
@@ -146,7 +142,7 @@ function receivedAnswer(answer) {
         console.log(err);
     });
 
-    //gotAnswer = true;
+    gotAnswer = true;
 }
 
 function startWebSocket() {
@@ -154,18 +150,23 @@ function startWebSocket() {
     var $chatMessage = $("#chatMessage"),
         $send = $("#send"),
         $messages = $("#messages"),
-        $roomNumber = $("#roomNumber"),
+        $room = $("#room"),
         $attendees = $("#attendees"),
-        $attendeeList = $("#attendeeList");
+        $attendeeList = $("#attendeeList"),
+        $title = $("#title");
 
 
     webSocketConnection = new WebSocket(wsURL);
 
     webSocketConnection.onopen = function () {
-        webSocketConnection.send("user" + userName);
+        var userJson = {
+            tag: "user",
+            userName: userName
+        };
+        msgServer(userJson);
         $send.on('click', function () {
             var msg = {
-                type: "chat-message",
+                tag: "chat-message",
                 user: userName,
                 msg: userName + ": " + $chatMessage.val()
             };
@@ -180,58 +181,62 @@ function startWebSocket() {
     };
 
     webSocketConnection.onmessage = function (evt) {
-        if (evt.data.substring(0, 7) === "Welcome" || evt.data.substring(0, 8) === "The Room") {
 
-            //alert(evt.data); // Welcome to Room || Room doesn't exist
-            if (evt.data === "The Room ID entered does not exist.") {
-                alert(evt.data);
+        console.log("From server: " + evt.data);
+
+        var msg = JSON.parse(evt.data);
+
+        switch(msg.tag) {
+
+            case "roomError":
+                alert("The Room ID entered does not exist.");
                 webSocketConnection.close();
-                location.reload();
-            }
+                window.location.href = "/";
+                break;
 
-        } else if (evt.data.substring(0, 4) === "user") {
-
-            var user = evt.data.substring(4, evt.data.length); // adding user to attendee list
-            if (user !== userName) {
-                otherUserPresent = true;
-                if (caller) {
-                    startNegotiating();
+            case "user":
+                if (msg.userName !== userName) {
+                    otherUserPresent = true; //redundant?
+                    if (caller) {
+                        startNegotiating();
+                    }
                 }
-            }
-            $attendees.html("Attendees:");
-            $attendeeList.append($("<li>" + user + "</li>"));
+                $attendees.html("Attendees:");
+                $attendeeList.append($("<li>" + msg.userName + "</li>"));
+                break;
 
-            msgServer(SDPOffer); // new user has joined so send them the offer
+            case "roomID":
+                $room.html("You are in Room " + msg.roomID.toString());
+                $title.append(" " + msg.roomID.toString());
+                break;
 
-        } else if (evt.data.substring(0, 2) === "ID") {
-
-            $roomNumber.html("You are in Room " + evt.data); // room number
-
-        } else {
-
-
-            var msg = JSON.parse(evt.data);
+            case "ready":
 
 
-            switch(msg.type) {
+            case "offer":
+                receivedOffer(msg);
+                break;
 
-                case "offer":
-                    receivedOffer(msg);
-                    break;
+            case "answer":
+                receivedAnswer(msg);
+                break;
 
-                case "answer":
-                    receivedAnswer(msg);
-                    break;
+            case "ice-candidate":
+                newICECandidateMessage(msg);
+                break;
 
-                case "ice-candidate":
-                    newICECandidateMessage(msg);
-                    break;
+            case "chat-message":
+                $messages.prepend($("<li>" + msg.msg + "</li>"));
+                break;
 
-                case "chat-message":
-                    $messages.prepend($("<li>" + msg.msg + "</li>"));
-                    break;
-            }
+            case "hangUp":
+                webSocketConnection.close();
+                alert("Call has been ended.");
+                window.location.href = "/";
+                break;
+
         }
+
     };
 
     webSocketConnection.onclose = function() {
@@ -247,14 +252,19 @@ function msgServer (message) {
         alert(err.name + ": " + err.message)
     }
 
-    webSocketConnection.send(jsonMsg);
+    console.log("To server: " + jsonMsg);
+
+    try {
+        webSocketConnection.send(jsonMsg);
+    } catch (error) {
+        console.log(error);
+    }
 }
 
 function newConnection() {
 
     localPC.onicecandidate = handleICECandidateEvent;
     localPC.ontrack = handleTrackEvent;
-    //localPC.onnegotiationneeded = startNegotiating;
 
 }
 
@@ -262,7 +272,7 @@ function handleICECandidateEvent(event) {
 
     if (event.candidate) {
         var ICECandidate = {
-            type: "ice-candidate",
+            tag: "ice-candidate",
             user: userName,
             candidate: event.candidate
         };
@@ -293,6 +303,15 @@ function handleTrackEvent(event) {
     remoteVideoFeed.srcObject = event.streams[0];
 }
 
+function endCall() {
+
+    callEnded = true;
+
+    var hangUp = {
+        tag: "hangUp"
+    };
+    msgServer(hangUp);
+}
 
 
 

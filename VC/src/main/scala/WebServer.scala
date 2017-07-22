@@ -1,5 +1,5 @@
 import akka.NotUsed
-import akka.actor.{ActorSystem, PoisonPill}
+import akka.actor.{ActorLogging, ActorSystem, PoisonPill}
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.HttpApp
@@ -12,6 +12,7 @@ import akka.http.scaladsl.server.Directives._
 object WebServer extends HttpApp {
 
   def index = getFromResource("index.html")
+  def room = getFromResource("room.html")
   def css = getFromResource("CSS/main.css")
   def js = getFromResource("Javascript/main.js")
   def jquery = getFromResource("Javascript/lib/jquery-3.2.1.js")
@@ -24,6 +25,11 @@ object WebServer extends HttpApp {
     pathEndOrSingleSlash {
       get {
         index
+      }
+    } ~
+    pathPrefix("room") {
+      get {
+        room
       }
     } ~
     path("js") {
@@ -56,23 +62,28 @@ object WebServer extends HttpApp {
 
   def webSocketHandler(num: Int, name: String): Flow[Message, Message, Any] = {
 
-    val room = if (num == 0) OpenRooms.createRoom() else OpenRooms.findRoom(num)
+    OpenRooms.createRoom() // here for testing so I don't need to constantly create one.
+
+    val room = OpenRooms.findRoom(num)
     val moderator = room.roomModerator
 
     val sink = Sink.actorRef[MyMessage](moderator, PoisonPill) // is PoisonPill best option here?
 
-    def incoming: Sink[Message, NotUsed] = {
+    def incoming: Sink[Message, _] = {
       Flow[Message].map {
-        case TextMessage.Strict(msg) => MyMessage(msg)
+       case TextMessage.Strict(msg) => MyMessage(msg)
+
       }.to(sink)
     }
 
     def outgoing: Source[Message, _] = {
-      Source.actorRef[MyMessage](50, OverflowStrategy.fail)
+      Source.actorRef[MyMessage](10, OverflowStrategy.dropHead)
         .mapMaterializedValue(sourceActor => moderator ! User(name, sourceActor))
         .map {
           case msg: MyMessage => TextMessage(msg.data)
         }
+
+
     }
 
     Flow.fromSinkAndSource(incoming, outgoing)

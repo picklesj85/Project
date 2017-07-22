@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title id="title">Instant VC - Room</title>
+
+    <link rel="stylesheet" href="css">
+    <script src="jquery"></script>
+    <script src="adapter"></script>
+    <script src="js"></script>
+
+
+</head>
+<body onload="getMedia()">
+<div class="center">
+
+    <h1 class="heading" id="room"></h1>
+    <h3 class="attendees" id="attendees"></h3>
+    <ul class="attendeeList" id="attendeeList"></ul>
+
+    <video id="remoteVideoFeed" width="320" height="240" autoplay></video>
+    <video id ="localVideoFeed" width="160" height="120" autoplay></video>
+
+    <div>
+        <p id="start"></p>
+        <button id="endCall" onclick="endCall()">End Call</button>
+        <br>
+        <br>
+        <textarea class="messages" id="chatMessage"></textarea>
+    </div>
+    <button class="messages" id="send">Send</button>
+    <div class="chatArea"><ul class="messages" id="messages"></ul></div>
+</div>
+</body>
+</html>

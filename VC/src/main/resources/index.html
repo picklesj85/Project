@@ -1,38 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-
-    <title>Instant VC</title>
+    <title>Instant VC - Welcome</title>
 
     <link rel="stylesheet" href="css">
-    <script src="jquery"></script>
-    <script src="adapter"></script>
-    <script src="js"></script>
-
 
 </head>
-<body onload="getMedia()">
-<div class="center">
+<body class="center">
 
-    <h1 class="heading">Welcome to Instant VC</h1>
-    <h2 class="roomNumber" id="roomNumber"></h2>
-    <h3 class="attendees" id="attendees"></h3>
-    <ul class="attendeeList" id="attendeeList"></ul>
+    <h1 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h1>
+    <br><br>
+    <input type="button" value="Create Room" onclick="createRoom()">
 
-    <video id="remoteVideoFeed" width="320" height="240" autoplay></video>
-    <video id ="localVideoFeed" width="320" height="240" autoplay></video>
-
-    <div>
-        <button id="startButton" onclick="start()">Start Call</button>
-        <button id="joinButton" onclick="join()">Join Call</button>
+    <form action="room.html" method="get">
+        Room number:<br>
+        <input type="text" name="roomID"><br>
+        Name:<br>
+        <input type="text" name="userName"><br>
         <br>
-        <br>
-        <textarea class="messages" id="chatMessage"></textarea>
-    </div>
-    <button class="messages" id="send">Send</button>
-    <div class="chatArea"><ul class="messages" id="messages"></ul></div>
-</div>
+        <input type="submit" value="Join">
+    </form>
+
 </body>
 </html>
