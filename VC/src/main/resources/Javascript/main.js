@@ -14,6 +14,7 @@ var caller;
 var gotAnswer = false;
 var otherUserPresent = false; // redundant?
 var callEnded = false;
+var myMediaStream;
 
 
 var constraints = {video: true, audio: true};
@@ -38,6 +39,7 @@ function getMedia() {
         var localVideoFeed = document.getElementById('localVideoFeed');
         localVideoFeed.muted = true; // mute this otherwise feedback
         localVideoFeed.srcObject = localMediaStream; // display local video feed
+        myMediaStream = localMediaStream // assign to global for reconnection if failure
         localMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
             localPC.addTrack(track, localMediaStream)
         });
@@ -86,13 +88,17 @@ function startNegotiating() {
 
     localPC.onnegotiationneeded = startNegotiating;
     
-    // setTimeout(function () {
-    //     if (!gotAnswer) {
-    //         localPC.close();
-    //         webSocketConnection.close();
-    //         getMedia();
-    //     }
-    // }, 3000);
+    setTimeout(function () {
+        if (!gotAnswer) {
+            localPC.close();
+            webSocketConnection.close();
+            localPC = new RTCPeerConnection();
+            myMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
+                localPC.addTrack(track, myMediaStream)
+            });
+            prepareWebSocket();
+        }
+    }, 3000);
 }
 
 function receivedOffer(offer) {
@@ -240,7 +246,7 @@ function startWebSocket() {
     };
 
     webSocketConnection.onclose = function() {
-        alert("WebSocket Closed");
+        console.log("WebSocket Closed.")
     };
 }
 
