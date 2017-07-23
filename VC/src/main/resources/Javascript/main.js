@@ -11,38 +11,27 @@ var localPC = null; // change name?
 var SDPOffer;
 var SDPAnswer = "not yet defined";
 var caller;
-var gotAnswer = false;
 var otherUserPresent = false; // redundant?
 var callEnded = false;
 var myMediaStream;
-
+var offerFailed = true;
+var answerFailed = true;
 
 var constraints = {video: true, audio: true};
 
-//var startButton = document.getElementById('startButton');
 
-function start() {
-    var ready = {
-        tag: "ready",
-        user: userName
-    };
-    msgServer(ready);
-}
 
 
 
 function getMedia() {
 
-    localPC = new RTCPeerConnection();
 
     navigator.mediaDevices.getUserMedia(constraints).then(function(localMediaStream) {
         var localVideoFeed = document.getElementById('localVideoFeed');
         localVideoFeed.muted = true; // mute this otherwise feedback
         localVideoFeed.srcObject = localMediaStream; // display local video feed
         myMediaStream = localMediaStream // assign to global for reconnection if failure
-        localMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
-            localPC.addTrack(track, localMediaStream)
-        });
+        
         localVideoFeed.onloadedmetadata = function () {
             prepareWebSocket();
         }
@@ -64,7 +53,7 @@ function prepareWebSocket() {
 
     wsURL = "ws://" + IPAddress + "/webSocket/" + roomID + "?name=" + userName;
 
-    newConnection();
+    newPeerConnection();
 
     startWebSocket();
 
@@ -88,28 +77,27 @@ function startNegotiating() {
 
     localPC.onnegotiationneeded = startNegotiating;
     
-    setTimeout(function () {
-        if (!gotAnswer) {
+    setTimeout(function () { // timeout function for when sending the offer has failed
+        if (offerFailed) {
             localPC.close();
             webSocketConnection.close();
-            localPC = new RTCPeerConnection();
-            myMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
-                localPC.addTrack(track, myMediaStream)
-            });
-            prepareWebSocket();
+            newPeerConnection();
+            startWebSocket();
         }
-    }, 3000);
+    }, 200);
 }
 
 function receivedOffer(offer) {
 
     if (offer.user === userName) {
+        offerFailed = false; // the server has relayed my offer so I know my connection is good
+
         return; // this is your own offer!
     }
 
     console.log("Received offer");
 
-    newConnection();
+    newPeerConnection();
 
     var remoteDesc = new RTCSessionDescription(offer.sdp);
 
@@ -129,12 +117,22 @@ function receivedOffer(offer) {
         alert(err.name + ": " + err.message + "\n\n in receivedOffer()");
     });
 
+    setTimeout(function () { // timeout function for when sending the answer has failed
+        if (answerFailed) {
+            localPC.close();
+            webSocketConnection.close();
+         //   newPeerConnection();
+            prepareWebSocket();
+        }
+    }, 500);
+
 }
 
 
 function receivedAnswer(answer) {
 
     if (answer.user === userName) {
+        answerFailed = false; // the server has relayed my offer so I know my connection is good
         return; // own answer
     }
 
@@ -148,7 +146,6 @@ function receivedAnswer(answer) {
         console.log(err);
     });
 
-    gotAnswer = true;
 }
 
 function startWebSocket() {
@@ -204,6 +201,10 @@ function startWebSocket() {
                 if (msg.userName !== userName) {
                     otherUserPresent = true; //redundant?
                     if (caller) {
+                        if (!offerFailed) { // the other side has a connection issue so need to start over.
+                            localPC.close();
+                            newPeerConnection();
+                        }
                         startNegotiating();
                     }
                 }
@@ -267,11 +268,31 @@ function msgServer (message) {
     }
 }
 
-function newConnection() {
+function newPeerConnection() {
+
+    localPC = new RTCPeerConnection();
+
+    myMediaStream.getTracks().forEach(function (track) { // add local stream to peer connection
+        localPC.addTrack(track, myMediaStream)
+    });
 
     localPC.onicecandidate = handleICECandidateEvent;
     localPC.ontrack = handleTrackEvent;
+    localPC.oniceconnectionstatechange = function () {
+        if (localPC.iceConnectionState === "failed") {
+            iceFailed();
+        }
+    }
 
+}
+
+function iceFailed() {
+    localPC.close();
+    webSocketConnection.close();
+    offerFailed = true;
+    answerFailed = true;
+    newPeerConnection();
+    prepareWebSocket();
 }
 
 function handleICECandidateEvent(event) {
@@ -288,9 +309,7 @@ function handleICECandidateEvent(event) {
 
 function newICECandidateMessage(msg) {
 
-    // if (caller && !gotAnswer) {
-    //     return;
-    // }
+
     if (msg.user === userName) {
         return; // own message!
     }
