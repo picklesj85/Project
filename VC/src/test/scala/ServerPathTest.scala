@@ -7,12 +7,16 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.stream.ActorMaterializer
 
+import spray.json._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+
+
 import scala.io.Source
 import akka.util.ByteString
 
 import scala.concurrent.duration._
 
-class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with BeforeAndAfterAll {
+class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with BeforeAndAfterAll with MyJsonProtocol {
 
 
   def ws = WebServer.routes
@@ -22,6 +26,10 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   val wsClient1Room2 = WSProbe()
   val wsClient2Room2 = WSProbe()
   val wsClient3Room2 = WSProbe()
+
+  // not needed for now as currently creating new rooms for every webSocket
+//  OpenRooms.createRoom() // Room 1
+//  OpenRooms.createRoom() // Room 2
 
   test("root path returns index.html") {
     Get() ~> ws ~> check {
@@ -51,14 +59,26 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
-  test("test the webSocket path 0 to create new room") {
-    WS("/webSocket/0?name=Alice", wsClient1Room1.flow) ~> ws ~> check {
+  test("adapter path returns adapter") {
+    Get("/adapter") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("Javascript/lib/adapter.js").mkString
+    }
+  }
+
+  test("room path returns room") {
+    Get("/room") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("room.html").mkString
+    }
+  }
+
+  test("test the webSocket path for user joining room") {
+    WS("/webSocket/1?name=Alice", wsClient1Room1.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient1Room1.expectMessage("1")
-
-      wsClient1Room1.expectMessage("Welcome to Room 1!")
+      wsClient1Room1.expectMessage(RoomID("roomID", 1, true).toJson.prettyPrint)
 
       assert(OpenRooms.openRooms.contains(1))
 
@@ -76,12 +96,9 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient2Room1.expectMessage("userAlice")
+      wsClient2Room1.expectMessage(SendUser("user", "Alice").toJson.prettyPrint)
 
-      wsClient2Room1.expectMessage("1")
-      wsClient1Room1.expectNoMessage(100.millis)
-
-      wsClient2Room1.expectMessage("Welcome to Room 1!")
+      wsClient2Room1.expectMessage(RoomID("roomID", 1, false).toJson.prettyPrint)
       wsClient1Room1.expectNoMessage(100.millis)
 
       wsClient2Room1.sendMessage("hello")
@@ -97,21 +114,19 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       isWebSocketUpgrade shouldEqual true
 
-      webSocketClient.expectMessage("The Room ID entered does not exist.")
+      webSocketClient.expectMessage(RoomError("roomError").toJson.prettyPrint)
 
       webSocketClient.sendMessage("Test")
       webSocketClient.expectNoMessage(100.millis)
     }
   }
 
-  test("client creates another new room") {
-    WS("/webSocket/0?name=Sam", wsClient1Room2.flow) ~> ws ~> check {
+  test("client joins room 2") {
+    WS("/webSocket/2?name=Sam", wsClient1Room2.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient1Room2.expectMessage("2")
-
-      wsClient1Room2.expectMessage("Welcome to Room 2!")
+      wsClient1Room2.expectMessage(RoomID("roomID", 2, true).toJson.prettyPrint)
 
       assert(OpenRooms.openRooms.contains(2))
 
@@ -121,20 +136,19 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
-  test("client joins room 2") {
+  test("second client joins room 2") {
     WS("/webSocket/2?name=Fred", wsClient2Room2.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient2Room2.expectMessage("userSam")
+      wsClient2Room2.expectMessage(SendUser("user", "Sam").toJson.prettyPrint)
 
-      wsClient2Room2.expectMessage("2")
+      wsClient2Room2.expectMessage(RoomID("roomID", 2, false).toJson.prettyPrint)
       wsClient1Room2.expectNoMessage(100.millis)
 
-      wsClient2Room2.expectMessage("Welcome to Room 2!")
-      wsClient1Room2.expectNoMessage(100.millis)
 
-      assert(OpenRooms.openRooms.size == 2) // should now be 2 rooms
+
+      assert(OpenRooms.openRooms.size == 5) // for now as creating new room every time there is a new webSocket
 
       wsClient2Room2.sendMessage("Test")
       wsClient2Room2.expectMessage("Test")
@@ -148,16 +162,14 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient3Room2.expectMessage("userSam")
-      wsClient3Room2.expectMessage("userFred")
+      wsClient3Room2.expectMessage(SendUser("user", "Sam").toJson.prettyPrint)
+      wsClient3Room2.expectMessage(SendUser("user", "Fred").toJson.prettyPrint)
 
-      wsClient3Room2.expectMessage("2")
+      wsClient3Room2.expectMessage(RoomID("roomID", 2, false).toJson.prettyPrint)
       wsClient1Room2.expectNoMessage(100.millis)
       wsClient2Room2.expectNoMessage(100.millis)
 
-      wsClient3Room2.expectMessage("Welcome to Room 2!")
-      wsClient1Room2.expectNoMessage(100.millis)
-      wsClient2Room2.expectNoMessage(100.millis)
+
 
       wsClient3Room2.sendMessage("Talking to two other clients")
       wsClient3Room2.expectMessage("Talking to two other clients")
@@ -174,6 +186,21 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       wsClient3Room2.expectMessage("checking client 1 can reach everyone")
       wsClient2Room2.expectMessage("checking client 1 can reach everyone")
 
+    }
+  }
+
+  test("hang up deletes the room") {
+    WS("/webSocket/2?name=Sarah", wsClient3Room2.flow) ~> ws ~> check {
+
+      val size = OpenRooms.openRooms.size
+
+      wsClient3Room2.sendMessage("{\"tag\":\"hangUp\"}")
+
+      wsClient1Room1.expectNoMessage(100.millis) // give a chance for the poison pills to be processed first
+      wsClient2Room1.expectNoMessage(100.millis)
+
+      assert(OpenRooms.openRooms.size == size - 1)
+      assert(!OpenRooms.openRooms.contains(2))
     }
   }
 

@@ -25,4 +25,8 @@ class WebSocketSystemTest extends FunSuite with BeforeAndAfterAll {
     assert(OpenRooms.openRooms.size == 2)
     assert(OpenRooms.openRooms.keySet == Set(1, 2))
   }
+  test("delete rooms") {
+    OpenRooms.deleteRoom(1)
+    assert(OpenRooms.openRooms.size == 1)
+  }
 }

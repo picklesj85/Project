@@ -22,16 +22,16 @@ class ActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with Implici
   "A room moderator" must {
 
     "send the room number to new members" in {
-      probe1.expectMsg(MyMessage("1"))
+      probe1.expectMsg(WrappedMessage("1"))
     }
 
     "send a welcome message to new members" in {
-      probe1.expectMsg(MyMessage("Welcome to Room 1!"))
+      probe1.expectMsg(WrappedMessage("Welcome to Room 1!"))
     }
 
     "forward on all messages" in {
-      moderator ! MyMessage("hello")
-      probe1.expectMsg(MyMessage("hello"))
+      moderator ! WrappedMessage("hello")
+      probe1.expectMsg(WrappedMessage("hello"))
     }
 
   }
@@ -41,19 +41,19 @@ class ActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with Implici
     moderator ! User("Sarah", probe2.ref)
 
     "send the existing names to the new member" in {
-      probe2.expectMsg(MyMessage("userFred"))
+      probe2.expectMsg(WrappedMessage("userFred"))
     }
 
     "send the new member the room number and welcome message" in {
-      probe2.expectMsg(MyMessage("1"))
-      probe2.expectMsg(MyMessage("Welcome to Room 1!"))
+      probe2.expectMsg(WrappedMessage("1"))
+      probe2.expectMsg(WrappedMessage("Welcome to Room 1!"))
     }
 
     "forward messages to all room members" in {
-      moderator ! MyMessage("hi there")
-      probe1.expectMsg(MyMessage("hi there"))
-      probe2.expectMsg(MyMessage("hello"))
-      probe2.expectMsg(MyMessage("hi there"))
+      moderator ! WrappedMessage("hi there")
+      probe1.expectMsg(WrappedMessage("hi there"))
+      probe2.expectMsg(WrappedMessage("hello"))
+      probe2.expectMsg(WrappedMessage("hi there"))
     }
 
   }
@@ -62,22 +62,22 @@ class ActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with Implici
     moderator ! User("test", probe3.ref)
 
     "send the existing names to the new member" in {
-      probe3.expectMsg(MyMessage("userFred"))
-      probe3.expectMsg(MyMessage("userSarah"))
+      probe3.expectMsg(WrappedMessage("userFred"))
+      probe3.expectMsg(WrappedMessage("userSarah"))
     }
 
     "send the new member the room number and welcome message" in {
-      probe3.expectMsg(MyMessage("1"))
-      probe3.expectMsg(MyMessage("Welcome to Room 1!"))
+      probe3.expectMsg(WrappedMessage("1"))
+      probe3.expectMsg(WrappedMessage("Welcome to Room 1!"))
     }
 
     "forward messages to all room members" in {
-      moderator ! MyMessage("three way")
-      probe1.expectMsg(MyMessage("three way"))
-      probe2.expectMsg(MyMessage("three way"))
-      probe3.expectMsg(MyMessage("hello"))
-      probe3.expectMsg(MyMessage("hi there"))
-      probe3.expectMsg(MyMessage("three way"))
+      moderator ! WrappedMessage("three way")
+      probe1.expectMsg(WrappedMessage("three way"))
+      probe2.expectMsg(WrappedMessage("three way"))
+      probe3.expectMsg(WrappedMessage("hello"))
+      probe3.expectMsg(WrappedMessage("hi there"))
+      probe3.expectMsg(WrappedMessage("three way"))
     }
   }
 
@@ -87,7 +87,7 @@ class ActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with Implici
 
     "tell the client the room does not exist" in {
       mod ! User("test", probe3.ref)
-      probe3.expectMsg(MyMessage("The Room ID entered does not exist."))
+      probe3.expectMsg(WrappedMessage("The Room ID entered does not exist."))
     }
   }
 

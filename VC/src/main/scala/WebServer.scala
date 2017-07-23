@@ -67,22 +67,20 @@ object WebServer extends HttpApp {
     val room = OpenRooms.findRoom(num)
     val moderator = room.roomModerator
 
-    val sink = Sink.actorRef[MyMessage](moderator, PoisonPill) // is PoisonPill best option here?
+    val sink = Sink.actorRef[WrappedMessage](moderator, PoisonPill) // is PoisonPill best option here?
 
     def incoming: Sink[Message, _] = {
       Flow[Message].map {
-       case TextMessage.Strict(msg) => MyMessage(msg)
+       case TextMessage.Strict(msg) => WrappedMessage(msg)
 
       }.to(sink)
     }
 
     def outgoing: Source[Message, _] = {
-      Source.actorRef[MyMessage](10, OverflowStrategy.dropHead)
-        .mapMaterializedValue(sourceActor => {
-          moderator ! User(name, sourceActor)
-        })
+      Source.actorRef[WrappedMessage](10, OverflowStrategy.dropHead)
+        .mapMaterializedValue(sourceActor => moderator ! User(name, sourceActor))
         .map {
-          case msg: MyMessage => TextMessage(msg.data)
+          case msg: WrappedMessage => TextMessage(msg.data)
         }
 
 

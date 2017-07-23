@@ -7,19 +7,19 @@ import DefaultJsonProtocol._
 
 
 
-case class MyMessage(data: String)
+case class WrappedMessage(data: String)
 case class User(userName: String, actorRef: ActorRef)
 case class SendUser(tag: String, userName: String) // cannot use spray-json with User because of ActorRef
 case class RoomID(tag: String, roomID: Int, caller: Boolean)
 case class RoomError(tag: String)
-case class HangUp(tag: String)
+
 
 
 trait MyJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val sendUserFormat = jsonFormat2(SendUser)
   implicit val roomIDFormat = jsonFormat3(RoomID)
   implicit val roomErrorFormat = jsonFormat1(RoomError)
-  implicit val hangUpFormat = jsonFormat1(HangUp)
+  implicit val wrappedMessageFormat = jsonFormat1(WrappedMessage)
 }
 
 
@@ -33,15 +33,16 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
 
   var roomMembers: Set[User] = Set.empty[User]
   val roomID = room.roomID
+  val hangUp = "{\"tag\":\"hangUp\"}" // the string that a hangup message will come as
 
   override def receive = {
-    case m: MyMessage =>
+    case m: WrappedMessage =>
       //log.info(m.data)
       roomMembers.foreach(member => {
         member.actorRef ! m
         log.info("Sent to " + member.userName + ": " + m.data)
       })
-      if (m.data.parseJson.convertTo[HangUp] == HangUp("hangUp")) {
+      if (m.data == hangUp) {
         roomMembers.foreach(member => {
           member.actorRef ! PoisonPill
           log.info("PoisonPill sent to " + member.userName)
@@ -51,17 +52,15 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
         self ! PoisonPill
       }
 
-
-
-
+      
     case user: User =>
       if (roomID != Int.MinValue) {
-        roomMembers.foreach(member => user.actorRef ! MyMessage(SendUser("user", member.userName).toJson.prettyPrint))
+        roomMembers.foreach(member => user.actorRef ! WrappedMessage(SendUser("user", member.userName).toJson.prettyPrint))
         roomMembers += user
         roomMembers.foreach(m => log.info(m.userName + " is in the room."))
-        user.actorRef ! MyMessage(RoomID("roomID", roomID, roomMembers.size == 1).toJson.prettyPrint)
+        user.actorRef ! WrappedMessage(RoomID("roomID", roomID, roomMembers.size == 1).toJson.prettyPrint)
       }
-      else user.actorRef ! MyMessage(RoomError("roomError").toJson.prettyPrint)
+      else user.actorRef ! WrappedMessage(RoomError("roomError").toJson.prettyPrint)
 
   }
 }
@@ -92,10 +91,5 @@ object OpenRooms {
   def deleteRoom(roomID: Int) = openRooms -= roomID
 }
 
-object Test extends App with MyJsonProtocol {
 
-  println("{\"tag\":\"hangUp\"}" == HangUp("hangUp").toJson.prettyPrint)
-  val hang = "{\"tag\":\"hangUp\"}"
-  println(hang.parseJson.convertTo[HangUp] == HangUp("hangUp"))
-}
 
