@@ -11,11 +11,12 @@ var localPC = null; // change name?
 var SDPOffer;
 var SDPAnswer = "not yet defined";
 var caller;
-var otherUserPresent = false; // redundant?
 var callEnded = false;
 var myMediaStream;
 var offerFailed = true;
 var answerFailed = true;
+
+var attendees = [];
 
 var constraints = {video: true, audio: true};
 
@@ -199,7 +200,6 @@ function startWebSocket() {
 
             case "user":
                 if (msg.userName !== userName) {
-                    otherUserPresent = true; //redundant?
                     if (caller) {
                         if (!offerFailed) { // the other side has a connection issue so need to start over.
                             localPC.close();
@@ -208,8 +208,11 @@ function startWebSocket() {
                         startNegotiating();
                     }
                 }
-                $attendees.html("Attendees:");
-                $attendeeList.append($("<li>" + msg.userName + "</li>"));
+                if (attendees.indexOf(msg.userName) === -1) { // user not added to list of attendees yet
+                    attendees.push(msg.userName);
+                    $attendees.html("Attendees:");
+                    $attendeeList.append($("<li>" + msg.userName + "</li>"));
+                }
                 break;
 
             case "roomID":
@@ -330,12 +333,14 @@ function handleTrackEvent(event) {
 
 function endCall() {
 
+
     callEnded = true;
 
     var hangUp = {
         tag: "hangUp"
     };
     msgServer(hangUp);
+    window.location.href = "/";
 }
 
 
