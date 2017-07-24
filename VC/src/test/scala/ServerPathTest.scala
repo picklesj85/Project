@@ -78,7 +78,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient1Room1.expectMessage(RoomID("roomID", 1, true).toJson.prettyPrint)
+      wsClient1Room1.expectMessage(RoomID("roomID", 1, true).toJson.prettyPrint) // true as 1st user so is the caller
 
       assert(OpenRooms.openRooms.contains(1))
 
@@ -98,7 +98,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       wsClient2Room1.expectMessage(SendUser("user", "Alice").toJson.prettyPrint)
 
-      wsClient2Room1.expectMessage(RoomID("roomID", 1, false).toJson.prettyPrint)
+      wsClient2Room1.expectMessage(RoomID("roomID", 1, false).toJson.prettyPrint) // false as 2nd user so not the caller
       wsClient1Room1.expectNoMessage(100.millis)
 
       wsClient2Room1.sendMessage("hello")
@@ -196,8 +196,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       wsClient3Room2.sendMessage("{\"tag\":\"hangUp\"}")
 
-      wsClient1Room1.expectNoMessage(100.millis) // give a chance for the poison pills to be processed first
-      wsClient2Room1.expectNoMessage(100.millis)
+      Thread.sleep(200) // give a chance for the poison pills to be processed first
 
       assert(OpenRooms.openRooms.size == size - 1)
       assert(!OpenRooms.openRooms.contains(2))
