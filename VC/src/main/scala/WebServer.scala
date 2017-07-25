@@ -8,6 +8,10 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.http.scaladsl.server.Directives._
 
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
 
 object WebServer extends HttpApp {
 
@@ -70,14 +74,18 @@ object WebServer extends HttpApp {
     val sink = Sink.actorRef[WrappedMessage](moderator, PoisonPill) // is PoisonPill best option here?
 
     def incoming: Sink[Message, _] = {
-      Flow[Message].map {
+      Flow[Message].collect {
        case TextMessage.Strict(msg) => WrappedMessage(msg)
+
+       case TextMessage.Streamed(stream) => Await.result(stream.runFold("")(_ + _) // handle streams
+         .flatMap(Future.successful)
+         .map(msg => WrappedMessage(msg)), 1000.millis)
 
       }.to(sink)
     }
 
     def outgoing: Source[Message, _] = {
-      Source.actorRef[WrappedMessage](10, OverflowStrategy.dropHead)
+      Source.actorRef[WrappedMessage](50, OverflowStrategy.dropHead)
         .mapMaterializedValue(sourceActor => moderator ! User(name, sourceActor))
         .map {
           case msg: WrappedMessage => TextMessage(msg.data)
