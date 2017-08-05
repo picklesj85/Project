@@ -1,3 +1,5 @@
+package server
+
 
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
@@ -52,7 +54,7 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
         self ! PoisonPill
       }
 
-      
+
     case user: User =>
       if (roomID != Int.MinValue) {
         roomMembers.foreach(member => user.actorRef ! WrappedMessage(SendUser("user", member.userName).toJson.prettyPrint))
@@ -90,6 +92,7 @@ object OpenRooms {
 
   def deleteRoom(roomID: Int) = openRooms -= roomID
 }
+
 
 
 

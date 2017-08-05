@@ -6,13 +6,12 @@ import akka.http.scaladsl.testkit._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.stream.ActorMaterializer
-
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 
-
 import scala.io.Source
 import akka.util.ByteString
+import server._
 
 import scala.concurrent.duration._
 

@@ -1,10 +1,11 @@
 import akka.actor.{Actor, ActorSystem, Props, Terminated}
 import akka.testkit.{ImplicitSender, TestActor, TestActorRef, TestActors, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FunSuite, Matchers, WordSpecLike}
+import server._
 import spray.json._
 
 
-class ActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with ImplicitSender with WordSpecLike
+class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with ImplicitSender with WordSpecLike
   with Matchers with BeforeAndAfterAll with MyJsonProtocol {
 
 

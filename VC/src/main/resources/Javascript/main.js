@@ -1,6 +1,6 @@
 "use strict";
 
-var IPAddress = "192.168.0.21:8080";
+var IPAddress = "192.168.0.14:8080";
 var userName;
 var roomID;
 var wsURL;

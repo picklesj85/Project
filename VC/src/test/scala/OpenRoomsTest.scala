@@ -1,7 +1,8 @@
 import akka.actor.ActorSystem
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import server._
 
-class WebSocketSystemTest extends FunSuite with BeforeAndAfterAll {
+class OpenRoomsTest extends FunSuite with BeforeAndAfterAll {
 
   implicit val system = ActorSystem()
 
@@ -9,9 +10,7 @@ class WebSocketSystemTest extends FunSuite with BeforeAndAfterAll {
     system.terminate()
   }
 
-  /**
-    * OpenRooms tests
-    */
+
 
   test("count increases when adding new room") {
     OpenRooms.createRoom()

@@ -5,6 +5,13 @@
     color: darkblue;
 }
 
+.error {
+    font-family: Calibri;
+    font-style: oblique;
+    font-weight: normal;
+    color: red;
+}
+
 .roomNumber {
     font-family: Calibri;
     font-style: normal;

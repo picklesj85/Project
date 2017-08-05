@@ -22,10 +22,13 @@ libraryDependencies ++= Seq(
 
 // akka http
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-http" % "10.0.8",
-  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.8" % Test
+  "com.typesafe.akka" %% "akka-http" % "10.0.9",
+  "com.typesafe.akka" %% "akka-http-testkit" % "10.0.9" % Test
 )
 
 // JSON support
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.3"
 libraryDependencies += "com.typesafe.akka" %% "akka-http-spray-json" % "10.0.7"
+
+// database connection driver
+libraryDependencies += "mysql" % "mysql-connector-java" % "5.1.12"

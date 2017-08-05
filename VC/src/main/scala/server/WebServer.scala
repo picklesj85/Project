@@ -1,15 +1,17 @@
-import akka.NotUsed
-import akka.actor.{ActorLogging, ActorSystem, PoisonPill}
-import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.HttpApp
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.stream.{ActorMaterializer, OverflowStrategy}
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.http.scaladsl.server.Directives._
+package server
 
+import akka.actor.{ActorSystem, PoisonPill}
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
+import akka.http.scaladsl.model.ws.{Message, TextMessage}
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.RouteResult.Complete
+import akka.http.scaladsl.server.{HttpApp, Route}
+import akka.stream.scaladsl.{Flow, Sink, Source}
+import akka.stream.{ActorMaterializer, OverflowStrategy}
+import database.DBConnector
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
-import ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 
@@ -21,6 +23,9 @@ object WebServer extends HttpApp {
   def js = getFromResource("Javascript/main.js")
   def jquery = getFromResource("Javascript/lib/jquery-3.2.1.js")
   def adapter = getFromResource("Javascript/lib/adapter.js")
+  def login = getFromResource("Javascript/login.js")
+  def home = getFromResource("home.html")
+  def loginError = getFromResource("loginError.html")
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
@@ -29,6 +34,33 @@ object WebServer extends HttpApp {
     pathEndOrSingleSlash {
       get {
         index
+      }
+    } ~
+    pathPrefix("credentials") {
+      post {
+        formFields('username, 'password) { (username, password) =>
+          val connection = DBConnector.connect
+          if (DBConnector.authenticate(username, password, connection)) {
+            redirect("home", StatusCodes.SeeOther)
+          } else {
+            redirect("loginError", StatusCodes.SeeOther)
+          }
+        }
+      }
+    } ~
+    path("login") {
+      get {
+        login
+      }
+    } ~
+    path("home") {
+      get {
+        home
+      }
+    } ~
+    path("loginError") {
+      get {
+        loginError
       }
     } ~
     pathPrefix("room") {
@@ -99,10 +131,11 @@ object WebServer extends HttpApp {
   }
 
   def main(args: Array[String]): Unit = {
-    WebServer.startServer("192.168.0.21", 8080)
+    WebServer.startServer("192.168.0.14", 8080)
     system.terminate()
   }
 
+  private case class Login(userName: String, password: String)
 }
 
 

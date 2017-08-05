@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Error</title>
+
+    <link rel="stylesheet" href="css">
+    <script src="login"></script>
+
+</head>
+<body class="center">
+
+<h1 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h1>
+<br><br>
+<input type="button" value="Create Room" onclick="createRoom()">
+
+<form action="room.html" method="get">
+    Room number:<br>
+    <input type="text" name="roomID"><br>
+    Name:<br>
+    <input type="text" name="userName"><br>
+    <br>
+    <input type="submit" value="Join">
+</form>
+
+<div>
+    <h2 class="error">The username or password entered is incorrect.</h2>
+    <form class="loginForm" action="/credentials" method="post">
+        <input type="text" name="username" placeholder="username" required>
+        <input type="password" name="password" placeholder="password" required>
+        <input type="submit" value="Login">
+        <p>Not registered? <a href="createAccount">Create an account</a> </p>
+    </form>
+</div>
+
+</body>
+</html>
