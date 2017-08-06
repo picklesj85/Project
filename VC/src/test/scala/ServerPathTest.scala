@@ -1,6 +1,6 @@
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.{FormData, StatusCodes}
 import org.scalatest._
 import akka.http.scaladsl.testkit._
 import akka.http.scaladsl.model.StatusCodes._
@@ -8,9 +8,11 @@ import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.stream.ActorMaterializer
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import akka.http.scaladsl.model.headers.Location
 
 import scala.io.Source
 import akka.util.ByteString
+import database.DBConnector
 import server.WebServer.getFromResource
 import server._
 
@@ -19,6 +21,9 @@ import scala.concurrent.duration._
 class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with BeforeAndAfterAll with MyJsonProtocol {
 
 
+  override def beforeAll { // write test entry to database
+    DBConnector.createUser("testUser", "testPassword", DBConnector.connect)
+  }
   def ws = WebServer.routes
 
   val wsClient1Room1 = WSProbe() // represents the client side of the web socket
@@ -97,7 +102,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
-  test("createAccount path returns createAccount") {
+  test("get createAccount path returns createAccount") {
     Get("/createAccount") ~> ws ~> check {
       status shouldBe OK
       responseAs[String] shouldEqual Source.fromResource("createAccount.html").mkString
@@ -110,6 +115,15 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       responseAs[String] shouldEqual Source.fromResource("usernameExists.html").mkString
     }
   }
+
+  test("incorrect credentials wrong password") {
+    Post("/credentials", FormData("username" -> "testUser", "password" -> "wrongPassword")) ~> ws ~> check {
+      status shouldBe SeeOther
+      response.header[Location] should be (Some(Location("loginError")))
+    }
+  }
+
+  // pick up from here, more credentials and create account tests
 
   test("test the webSocket path for user joining room") {
     WS("/webSocket/1?name=Alice", wsClient1Room1.flow) ~> ws ~> check {

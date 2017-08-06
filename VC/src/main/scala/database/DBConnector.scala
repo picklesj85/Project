@@ -41,6 +41,15 @@ object DBConnector {
     }
     false
   }
+
+  def deleteUser(name: String, password: String, connection: Connection): Boolean = {
+    if (nameAvailable(name, connection)) {
+      false // user does not exist
+    } else {
+      val statement = connection.createStatement()
+      statement.executeUpdate(s"DELETE FROM USERS WHERE USERNAME = '$name' AND PASSWORD = '$password'") == 1 // check both for security
+    }
+  }
 }
 
 object test extends App {
@@ -52,6 +61,9 @@ object test extends App {
 
   println("add user 'test': " + DBConnector.createUser("test", "test", connection))
   println("add 'test' again: " + DBConnector.createUser("test", "test", connection))
+
+  println("delete user 'test': " + DBConnector.deleteUser("test", "test", connection))
+  println("delete non-existing user: " + DBConnector.deleteUser("mike", "pword", connection))
 }
 
 //val statement = connection.createStatement()
