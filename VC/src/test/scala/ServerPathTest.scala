@@ -11,6 +11,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 
 import scala.io.Source
 import akka.util.ByteString
+import server.WebServer.getFromResource
 import server._
 
 import scala.concurrent.duration._
@@ -25,6 +26,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   val wsClient1Room2 = WSProbe()
   val wsClient2Room2 = WSProbe()
   val wsClient3Room2 = WSProbe()
+
 
   // not needed for now as currently creating new rooms for every webSocket
 //  OpenRooms.createRoom() // Room 1
@@ -69,6 +71,43 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     Get("/room") ~> ws ~> check {
       status shouldBe OK
       responseAs[String] shouldEqual Source.fromResource("room.html").mkString
+    }
+  }
+
+  test("home path returns home when logged in") {
+    UserManager.login("test")
+    Get("/home?user=test") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("home.html").mkString
+    }
+  }
+
+  test("home path does not return home if not logged in") {
+    UserManager.logout("test")
+    Get("/home?user=test") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual "You must be logged in to view this page."
+    }
+  }
+
+  test("loginError path returns loginError") {
+    Get("/loginError") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("loginError.html").mkString
+    }
+  }
+
+  test("createAccount path returns createAccount") {
+    Get("/createAccount") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("createAccount.html").mkString
+    }
+  }
+
+  test("userExists path returns usernameExists") {
+    Get("/userExists") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("usernameExists.html").mkString
     }
   }
 
