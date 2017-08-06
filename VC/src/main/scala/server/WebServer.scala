@@ -23,9 +23,10 @@ object WebServer extends HttpApp {
   def js = getFromResource("Javascript/main.js")
   def jquery = getFromResource("Javascript/lib/jquery-3.2.1.js")
   def adapter = getFromResource("Javascript/lib/adapter.js")
-  def login = getFromResource("Javascript/login.js")
   def home = getFromResource("home.html")
   def loginError = getFromResource("loginError.html")
+  def createAccount = getFromResource("createAccount.html")
+  def userExists = getFromResource("usernameExists.html")
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
@@ -41,21 +42,24 @@ object WebServer extends HttpApp {
         formFields('username, 'password) { (username, password) =>
           val connection = DBConnector.connect
           if (DBConnector.authenticate(username, password, connection)) {
-            redirect("home", StatusCodes.SeeOther)
+            UserManager.login(username)
+            redirect("home?user=" + username, StatusCodes.SeeOther)
           } else {
             redirect("loginError", StatusCodes.SeeOther)
           }
         }
       }
     } ~
-    path("login") {
-      get {
-        login
-      }
-    } ~
-    path("home") {
-      get {
-        home
+    pathPrefix("home") {
+      parameter('user) { user =>
+        if (UserManager.loggedIn.contains(user)) // user has validated credentials
+          get {
+            home
+          }
+        else
+          get {
+            complete("You must be logged in to view this page.") // user is trying to access page without logging in
+          }
       }
     } ~
     path("loginError") {
@@ -63,9 +67,30 @@ object WebServer extends HttpApp {
         loginError
       }
     } ~
+    pathPrefix("createAccount") {
+      post {
+        formFields('username, 'password) { (username, password) =>
+          val connection = DBConnector.connect
+          if (DBConnector.createUser(username, password, connection)) {
+            UserManager.login(username)
+            redirect("home?user=" + username, StatusCodes.SeeOther)
+          } else {
+            redirect("userExists", StatusCodes.SeeOther)
+          }
+        }
+      } ~
+      get {
+        createAccount
+      }
+    } ~
     pathPrefix("room") {
       get {
         room
+      }
+    } ~
+    path("userExists") {
+      get {
+        userExists
       }
     } ~
     path("js") {

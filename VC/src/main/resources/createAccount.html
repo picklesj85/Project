@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account</title>
+
+    <link rel="stylesheet" href="css">
+    <script>
+        function checkPasswordsMatch(pass1, pass2) {
+            if (pass1 !== pass2) {
+                alert("Passwords do not match.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+
+
+</head>
+<body class="center">
+
+<h1 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h1>
+<br><br>
+<input type="button" value="Create Room" onclick="createRoom()">
+
+<form action="room.html" method="get">
+    Room number:<br>
+    <input type="text" name="roomID"><br>
+    Name:<br>
+    <input type="text" name="userName"><br>
+    <br>
+    <input type="submit" value="Join">
+</form>
+
+<div>
+    <h2 class="heading">Create Account</h2>
+    <h4 class="heading">Choose a username and password. Your username must be unique.</h4>
+    <h4 id="response" class="error"></h4>
+
+    <form class="loginForm" id="createForm" action="/createAccount" method="post" onsubmit="return checkPasswordsMatch(pass1.value, pass2.value)">
+        <input type="text" name="username" placeholder="username" required>
+        <input type="password" id="pass1" name="password" placeholder="password" required>
+        <input type="password" id="pass2" name="confirmPassword" placeholder="confirm password" required>
+        <input type="submit" value="Create Account">
+    </form>
+</div>
+
+</body>
+</html>

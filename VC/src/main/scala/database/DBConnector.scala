@@ -24,14 +24,34 @@ object DBConnector {
 
   def authenticate(userName: String, password: String, connection: Connection): Boolean = {
     val statement = connection.createStatement()
-    val resultSet = statement.executeQuery(s"select * from users where username = '$userName' and password = '$password'")
+    val resultSet = statement.executeQuery(s"SELECT * FROM USERS WHERE USERNAME = '$userName' AND PASSWORD = '$password'")
     resultSet.next()
+  }
+
+  def nameAvailable(name: String, connection: Connection): Boolean = {
+    val statement = connection.createStatement()
+    val resultSet = statement.executeQuery(s"SELECT * FROM USERS WHERE USERNAME = '$name'")
+    !resultSet.next() // if empty name is available
+  }
+
+  def createUser(name: String, password: String, connection: Connection): Boolean = {
+    if (nameAvailable(name, connection)) {
+      val statement = connection.createStatement()
+      return statement.executeUpdate(s"INSERT INTO USERS VALUES('$name', '$password')") == 1
+    }
+    false
   }
 }
 
 object test extends App {
   val connection = DBConnector.connect
-  println(DBConnector.authenticate("james", "password", connection))
+  println("Authenticate: " + DBConnector.authenticate("james", "password", connection))
+
+  println("james available: " + DBConnector.nameAvailable("james", connection))
+  println("mike available: " + DBConnector.nameAvailable("mike", connection))
+
+  println("add user 'test': " + DBConnector.createUser("test", "test", connection))
+  println("add 'test' again: " + DBConnector.createUser("test", "test", connection))
 }
 
 //val statement = connection.createStatement()
