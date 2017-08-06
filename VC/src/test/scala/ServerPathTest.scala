@@ -20,9 +20,14 @@ import scala.concurrent.duration._
 
 class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with BeforeAndAfterAll with MyJsonProtocol {
 
+  val connection = DBConnector.connect
 
   override def beforeAll { // write test entry to database
-    DBConnector.createUser("testUser", "testPassword", DBConnector.connect)
+    DBConnector.createUser("testUser", "testPassword", connection)
+  }
+
+  override def afterAll: Unit = {
+    DBConnector.deleteUser("testUser", "testPassword", connection)
   }
   def ws = WebServer.routes
 
