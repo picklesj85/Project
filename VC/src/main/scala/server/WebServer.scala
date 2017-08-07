@@ -43,8 +43,10 @@ object WebServer extends HttpApp {
           val connection = DBConnector.connect
           if (DBConnector.authenticate(username, password, connection)) {
             UserManager.login(username)
+            connection.close()
             redirect("home?user=" + username, StatusCodes.SeeOther)
           } else {
+            connection.close()
             redirect("loginError", StatusCodes.SeeOther)
           }
         }
@@ -73,8 +75,10 @@ object WebServer extends HttpApp {
           val connection = DBConnector.connect
           if (DBConnector.createUser(username, password, connection)) {
             UserManager.login(username)
+            connection.close()
             redirect("home?user=" + username, StatusCodes.SeeOther)
           } else {
+            connection.close()
             redirect("userExists", StatusCodes.SeeOther)
           }
         }

@@ -29,6 +29,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   override def afterAll: Unit = { // delete test entry
     DBConnector.deleteUser("testUser", "testPassword", connection)
     DBConnector.deleteUser("newUser", "newPassword", connection)
+    connection.close()
   }
 
   def ws = WebServer.routes

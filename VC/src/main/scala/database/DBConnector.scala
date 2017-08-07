@@ -52,19 +52,7 @@ object DBConnector {
   }
 }
 
-object test extends App {
-  val connection = DBConnector.connect
-  println("Authenticate: " + DBConnector.authenticate("james", "password", connection))
 
-  println("james available: " + DBConnector.nameAvailable("james", connection))
-  println("mike available: " + DBConnector.nameAvailable("mike", connection))
-
-  println("add user 'test': " + DBConnector.createUser("test", "test", connection))
-  println("add 'test' again: " + DBConnector.createUser("test", "test", connection))
-
-  println("delete user 'test': " + DBConnector.deleteUser("test", "test", connection))
-  println("delete non-existing user: " + DBConnector.deleteUser("mike", "pword", connection))
-}
 
 //val statement = connection.createStatement()
 //val result = statement.executeQuery("select * from users")
