@@ -26,9 +26,11 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     DBConnector.createUser("testUser", "testPassword", connection)
   }
 
-  override def afterAll: Unit = {
+  override def afterAll: Unit = { // delete test entry
     DBConnector.deleteUser("testUser", "testPassword", connection)
+    DBConnector.deleteUser("newUser", "newPassword", connection)
   }
+
   def ws = WebServer.routes
 
   val wsClient1Room1 = WSProbe() // represents the client side of the web socket
@@ -125,6 +127,40 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     Post("/credentials", FormData("username" -> "testUser", "password" -> "wrongPassword")) ~> ws ~> check {
       status shouldBe SeeOther
       response.header[Location] should be (Some(Location("loginError")))
+    }
+  }
+
+  test("incorrect credentials wrong username") {
+    Post("/credentials", FormData("username" -> "testser", "password" -> "testPassword")) ~> ws ~> check {
+      status shouldBe SeeOther
+      response.header[Location] should be (Some(Location("loginError")))
+    }
+  }
+
+  test("correct credentials") {
+    Post("/credentials", FormData("username" -> "testUser", "password" -> "testPassword")) ~> ws ~> check {
+      status shouldBe SeeOther
+      response.header[Location] should be (Some(Location("home?user=testUser")))
+
+      assert(UserManager.loggedIn.size == 1)
+    }
+  }
+
+  test("create account existing account") {
+    Post("/createAccount", FormData("username" -> "testUser", "password" -> "testPassword")) ~> ws ~> check {
+      status shouldBe SeeOther
+      response.header[Location] should be (Some(Location("userExists")))
+
+      assert(UserManager.loggedIn.size == 1)
+    }
+  }
+
+  test("create account new account") {
+    Post("/createAccount", FormData("username" -> "newUser", "password" -> "newPassword")) ~> ws ~> check {
+      status shouldBe SeeOther
+      response.header[Location] should be (Some(Location("home?user=newUser")))
+
+      assert(UserManager.loggedIn.size == 2)
     }
   }
 

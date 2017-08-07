@@ -160,7 +160,6 @@ object WebServer extends HttpApp {
     system.terminate()
   }
 
-  private case class Login(userName: String, password: String)
 }
 
 
