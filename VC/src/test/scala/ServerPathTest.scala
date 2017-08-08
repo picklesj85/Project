@@ -117,6 +117,13 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
+  test("get homeJs path returns home.js") {
+    Get("/homeJs") ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual Source.fromResource("Javascript/home.js").mkString
+    }
+  }
+
   test("userExists path returns usernameExists") {
     Get("/userExists") ~> ws ~> check {
       status shouldBe OK
@@ -165,7 +172,6 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
-  // pick up from here, more credentials and create account tests
 
   test("test the webSocket path for user joining room") {
     WS("/webSocket/1?name=Alice", wsClient1Room1.flow) ~> ws ~> check {

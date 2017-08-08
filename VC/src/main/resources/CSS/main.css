@@ -47,5 +47,16 @@
     list-style-type: none;
 }
 
+.onlineUsers {
+    list-style-type: none;
+}
+
+.user {
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: bold;
+    color: black;
+}
+
 
 

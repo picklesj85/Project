@@ -7,7 +7,7 @@ object DBConnector {
 
   def connect: Connection = {
     val driver = "com.mysql.jdbc.Driver"
-    val url = "jdbc:mysql://localhost/test"
+    val url = "jdbc:mysql://localhost/VC"
     val username = "root"
     val password = "root"
 

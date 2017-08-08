@@ -2,9 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Logged in succesfully!</title>
+    <title id="title"></title>
+
+    <link rel="stylesheet" href="css">
+    <script src="homeJs"></script>
+
 </head>
-<body>
+<body class="center" onload="loadFunction()">
+
+
+    <div>
+        <h1 class="user" id="user"></h1>
+
+        <form align="right" method="post" action="logout"> <!-- to do -->
+            <label class="logout">
+                <input type="submit" id="logout" value="Logout">
+            </label>
+        </form>
+    </div>
+
+    <h3 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h3>
+
+    <input type="button" value="Create Room" onclick="createRoom()">
+
+    <form action="room.html" method="get">
+        Room number:<br>
+        <input type="text" name="roomID"><br>
+        Name:<br>
+        <input type="text" name="userName"><br>
+        <br>
+        <input type="submit" value="Join">
+    </form>
+
+    <div>
+        <h2 class="heading">Online Users</h2>
+
+        <ul id="onlineUsers" class="onlineUsers"><li></li></ul>
+
+    </div>
+
+
 
 </body>
 </html>

@@ -27,6 +27,7 @@ object WebServer extends HttpApp {
   def loginError = getFromResource("loginError.html")
   def createAccount = getFromResource("createAccount.html")
   def userExists = getFromResource("usernameExists.html")
+  def homeJs = getFromResource("Javascript/home.js")
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
@@ -117,6 +118,11 @@ object WebServer extends HttpApp {
        adapter
       }
     } ~
+    path("homeJs") {
+      get {
+        homeJs
+      }
+    } ~
     pathPrefix("webSocket" / IntNumber) {
       roomID =>
         parameter('name) { user =>
@@ -160,7 +166,7 @@ object WebServer extends HttpApp {
   }
 
   def main(args: Array[String]): Unit = {
-    WebServer.startServer("192.168.0.14", 8080)
+    WebServer.startServer("192.168.0.21", 8080)
     system.terminate()
   }
 
