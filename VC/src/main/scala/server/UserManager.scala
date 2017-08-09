@@ -1,40 +1,23 @@
 package server
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import spray.json._
 import server.MyJsonProtocol
 
 
-class UserManager(implicit actorSystem: ActorSystem) {
+class OnlineUser(clientActor: ActorRef) extends Actor with ActorLogging {
 
-  val director = actorSystem.actorOf(Props(classOf[Director]))
-
-  def getDirector = director
-
-}
-
-object UserManager {
-
-  var loggedIn: Set[String] = Set.empty[String] // list of users that have authenticated for security
-
-  var onlineUsers: Set[User] = Set.empty[User] // current online users
-
-  def login(userName: String) = loggedIn += userName
-
-  def logout(userName: String) = {
-    loggedIn -= userName
-    
-  }
-}
-
-
-class Director extends Actor with ActorLogging {
+  UserManager.onlineUsers += this
 
   override def receive = {
 
+    case message: WrappedMessage => {
+      // do another match to see what type of message. eg if poll send list of online users.
+      clientActor ! message
+    }
+
     case newUser: User => {
-      UserManager.onlineUsers += newUser
-      UserManager.onlineUsers.foreach(user => user.actorRef ! WrappedMessage(SendUser("newUser", newUser.userName).toJson.prettyPrint))
+      UserManager.onlineUsers.foreach(user => user.self ! WrappedMessage(SendUser("newUser", newUser.userName).toJson.prettyPrint))
     }
 
     case userLeft: SendUser => {
@@ -47,6 +30,21 @@ class Director extends Actor with ActorLogging {
   }
 
 }
+
+object UserManager {
+
+  var loggedIn: Set[String] = Set.empty[String] // list of users that have authenticated for security
+
+  var onlineUsers: Set[OnlineUser] = Set.empty[OnlineUser] // current online users
+
+  def login(userName: String) = loggedIn += userName
+
+  def logout(userName: String) = {
+    loggedIn -= userName
+    
+  }
+}
+
 
 object test extends App {
   implicit val system = ActorSystem()
