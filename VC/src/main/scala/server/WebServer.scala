@@ -1,6 +1,6 @@
 package server
 
-import akka.actor.{ActorSystem, PoisonPill}
+import akka.actor.{ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives._
@@ -128,6 +128,11 @@ object WebServer extends HttpApp {
         parameter('name) { user =>
           handleWebSocketMessages(webSocketHandler(roomID, user))
         }
+    } ~
+    pathPrefix("loggedIn") {
+      parameter('user) { user =>
+        handleWebSocketMessages(loggedInSocketHandler(user))
+      }
     }
   }
 
@@ -157,8 +162,32 @@ object WebServer extends HttpApp {
         .map {
           case msg: WrappedMessage => TextMessage(msg.data)
         }
+    }
 
+    Flow.fromSinkAndSource(incoming, outgoing)
 
+  }
+
+  def loggedInSocketHandler(userName: String): Flow[Message, Message, Any] = {
+
+    val user = system.actorOf(Props(new OnlineUser(userName)))
+
+    val sink = Sink.actorRef[WrappedMessage](user, PoisonPill)
+
+    def incoming: Sink[Message, _] = {
+      Flow[Message].collect {
+
+        case TextMessage.Strict(msg) => WrappedMessage(msg)
+
+      }.to(sink)
+    }
+
+    def outgoing: Source[Message, _] = {
+      Source.actorRef[WrappedMessage](10, OverflowStrategy.dropHead)
+        .mapMaterializedValue(sourceActor => user ! User(userName, sourceActor))
+        .map {
+          case msg: WrappedMessage => TextMessage(msg.data)
+        }
     }
 
     Flow.fromSinkAndSource(incoming, outgoing)

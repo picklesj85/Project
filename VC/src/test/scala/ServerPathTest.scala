@@ -40,6 +40,10 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   val wsClient2Room2 = WSProbe()
   val wsClient3Room2 = WSProbe()
 
+  val wsClient1 = WSProbe()
+  val wsClient2 = WSProbe()
+  val wsClient3 = WSProbe()
+
 
   // not needed for now as currently creating new rooms for every webSocket
 //  OpenRooms.createRoom() // Room 1
@@ -300,6 +304,91 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       assert(OpenRooms.openRooms.size == size - 1)
       assert(!OpenRooms.openRooms.contains(2))
+    }
+  }
+
+  test("test the loggedIn webSocket path one logged in user") {
+
+    WS("/loggedIn?user=James", wsClient1.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 1)
+      assert(UserManager.onlineUsers.head._1 == "James")
+
+      wsClient1.sendMessage("poll")
+      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+    }
+  }
+
+  test("test the loggedIn webSocket path two logged in users") {
+
+    WS("/loggedIn?user=Sarah", wsClient2.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 2)
+      assert(UserManager.onlineUsers.contains("Sarah"))
+
+      wsClient2.sendMessage("poll")
+      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      wsClient1.sendMessage("poll")
+      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+    }
+  }
+
+  test("test the loggedIn webSocket path three logged in users") {
+
+    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 3)
+      assert(UserManager.onlineUsers.contains("andy"))
+
+      wsClient3.sendMessage("poll")
+      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      wsClient1.sendMessage("poll")
+      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+      wsClient2.sendMessage("poll")
+      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+
+    }
+  }
+
+  test("test the loggedIn webSocket with a logout") {
+
+    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      assert(UserManager.onlineUsers.size == 3)
+      assert(UserManager.onlineUsers.contains("andy"))
+
+      wsClient3.sendMessage("logout")
+      assert(UserManager.onlineUsers.size == 2)
+      assert(!UserManager.onlineUsers.contains("andy"))
+
+      wsClient2.sendMessage("logout")
+      Thread.sleep(200)
+      assert(UserManager.onlineUsers.size == 1)
+      assert(!UserManager.onlineUsers.contains("Sarah"))
+
+      wsClient1.sendMessage("logout")
+      Thread.sleep(200)
+      assert(UserManager.onlineUsers.isEmpty)
+
     }
   }
 
