@@ -3,8 +3,14 @@ package server
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
 import spray.json._
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
-class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonProtocol {
+
+class OnlineUser(userName: String) extends Actor
+  with ActorLogging with MyJsonProtocol {
+
+  import context._
 
   var thisUser: ActorRef = _
 
@@ -12,15 +18,15 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
   override def receive = {
 
     case user: User =>
-      thisUser = user.actorRef
-      UserManager.onlineUsers += userName -> thisUser
-      thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+      if (!UserManager.loggedIn.contains(userName)) self ! PoisonPill // user has not authenticated
+      else
+        thisUser = user.actorRef
+        UserManager.onlineUsers += userName -> thisUser
+        thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+        system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
 
 
     case message: WrappedMessage => message.data match {
-
-        // send client all online users
-      case "poll" => thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
 
       case "logout" =>
         UserManager.onlineUsers -= userName
@@ -28,9 +34,16 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         self ! PoisonPill
     }
 
+    case Poll =>
+      thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+      system.scheduler.scheduleOnce(3000.millis, self, Poll) // poll loop
   }
 
+
 }
+
+
+
 
 object UserManager {
 
@@ -47,5 +60,6 @@ object UserManager {
 }
 
 case class AllOnlineUsers(tag: String, onlineUsers: Set[String])
+case object Poll
 
 

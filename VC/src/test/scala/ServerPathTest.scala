@@ -318,7 +318,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(UserManager.onlineUsers.size == 1)
       assert(UserManager.onlineUsers.head._1 == "James")
 
-      wsClient1.sendMessage("poll")
+      Thread.sleep(3000)
       wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
 
     }
@@ -335,10 +335,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(UserManager.onlineUsers.size == 2)
       assert(UserManager.onlineUsers.contains("Sarah"))
 
-      wsClient2.sendMessage("poll")
+      Thread.sleep(3000)
       wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      wsClient1.sendMessage("poll")
       wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
 
     }
@@ -355,13 +353,9 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(UserManager.onlineUsers.size == 3)
       assert(UserManager.onlineUsers.contains("andy"))
 
-      wsClient3.sendMessage("poll")
+      Thread.sleep(3000)
       wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      wsClient1.sendMessage("poll")
       wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      wsClient2.sendMessage("poll")
       wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
 
     }
@@ -377,6 +371,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(UserManager.onlineUsers.contains("andy"))
 
       wsClient3.sendMessage("logout")
+      Thread.sleep(200)
       assert(UserManager.onlineUsers.size == 2)
       assert(!UserManager.onlineUsers.contains("andy"))
 

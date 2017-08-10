@@ -23,21 +23,19 @@
 
     <h3 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h3>
 
-    <input type="button" value="Create Room" onclick="createRoom()">
+    <input type="button" value="Create Room" onclick="createRoom()"><br>
 
     <form action="room.html" method="get">
         Room number:<br>
         <input type="text" name="roomID"><br>
-        Name:<br>
-        <input type="text" name="userName"><br>
-        <br>
+        <input type="hidden" name="userName" id="userName"><br>
         <input type="submit" value="Join">
     </form>
 
     <div>
         <h2 class="heading">Online Users</h2>
 
-        <ul id="onlineUsers" class="onlineUsers"><li></li></ul>
+        <ul id="onlineUsers" class="onlineUsers"></ul>
 
     </div>
 

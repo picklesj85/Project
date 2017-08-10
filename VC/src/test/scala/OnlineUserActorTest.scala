@@ -8,7 +8,7 @@ import spray.json._
 class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with ImplicitSender with WordSpecLike
   with Matchers with BeforeAndAfterAll with MyJsonProtocol {
 
-  override def afterAll {
+  override def afterAll {}
 
 
   val user = TestActorRef(new OnlineUser("test"))
@@ -74,7 +74,8 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
   }
 
-    // this test isn't working at the moment i think it's due to concurrency and ordering of tests
+    // this test isn't working at the moment i think it's due to concurrency and ordering of
+    // tests
 //    "When a user logs out the onlineUser actor" must {
 //
 //      UserManager.loggedIn += "test"
