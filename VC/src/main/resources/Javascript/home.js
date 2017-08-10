@@ -42,6 +42,12 @@ function startWebSocket() {
 
                 }
                 document.getElementById("onlineUsers").innerHTML = userList; // display the list
+                break;
+
+            case "roomNumber":
+                alert("Please use room number: " + msg.number +
+                    "\n\nMake sure you share this number with the far site.");
+                break;
         }
     };
 
@@ -52,7 +58,7 @@ function startWebSocket() {
 }
 
 function createRoom() {
-    
+    msgServer("createRoom");
 }
 
 function msgServer (message) {

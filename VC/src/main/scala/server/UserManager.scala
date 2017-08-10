@@ -32,6 +32,10 @@ class OnlineUser(userName: String) extends Actor
         UserManager.onlineUsers -= userName
         UserManager.loggedIn -= userName
         self ! PoisonPill
+
+      case "createRoom" =>
+        val room = OpenRooms.createRoom()
+        thisUser ! WrappedMessage(RoomNumber("roomNumber", room.roomID).toJson.prettyPrint)
     }
 
     case Poll =>
@@ -61,5 +65,6 @@ object UserManager {
 
 case class AllOnlineUsers(tag: String, onlineUsers: Set[String])
 case object Poll
+case class RoomNumber(tag: String, number: Int)
 
 
