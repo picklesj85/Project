@@ -309,6 +309,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
   test("test the loggedIn webSocket path one logged in user") {
 
+    UserManager.loggedIn += "James"
+
     WS("/loggedIn?user=James", wsClient1.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
@@ -325,6 +327,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   }
 
   test("test the loggedIn webSocket path two logged in users") {
+
+    UserManager.loggedIn += "Sarah"
 
     WS("/loggedIn?user=Sarah", wsClient2.flow) ~> ws ~> check {
 
@@ -343,6 +347,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   }
 
   test("test the loggedIn webSocket path three logged in users") {
+
+    UserManager.loggedIn += "andy"
 
     WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
 

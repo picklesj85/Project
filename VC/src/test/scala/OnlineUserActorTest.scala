@@ -26,6 +26,8 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
   "When receiving a User an onlineUser actor" must {
 
+    UserManager.loggedIn += "test"
+
     user ! User("test", client1.ref)
 
     "add the new user to the onlineUsers map" in {
@@ -49,6 +51,8 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
   }
 
   "when another user logs in an online actor" must {
+
+    UserManager.loggedIn += "test2"
 
     user2 ! User("test2", client2.ref)
 

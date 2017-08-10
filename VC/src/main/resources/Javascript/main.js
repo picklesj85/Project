@@ -242,9 +242,7 @@ function startWebSocket() {
             case "hangUp":
                 webSocketConnection.close();
                 alert("Call has been ended.");
-                window.location.href = "/";
-                break;
-
+                redirect();
         }
 
     };
@@ -333,15 +331,29 @@ function handleTrackEvent(event) {
 
 function endCall() {
 
-
     callEnded = true;
 
     var hangUp = {
         tag: "hangUp"
     };
     msgServer(hangUp);
-    window.location.href = "/";
+    redirect();
 }
+
+function redirect() {
+
+    // takes you back to your user homepage if you are logged in, if not back to the site homepage
+
+    $.get("/home?user=" + userName, function (data) {
+        if (data.toString() === "You must be logged in to view this page.") {
+            window.location.href = "/";
+        } else {
+            window.location.href = "/home?user=" + userName;
+        }
+    });
+
+}
+
 
 
 
