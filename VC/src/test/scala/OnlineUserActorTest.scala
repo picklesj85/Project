@@ -18,10 +18,17 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     val client = TestProbe()
     val user2 = TestActorRef(new OnlineUser("test2"))
     val client2 = TestProbe()
+    val user3 = TestActorRef(new OnlineUser("test3"))
+    val client3 = TestProbe()
     val watcher1 = TestProbe()
     val watcher2 = TestProbe()
+    val watcher3 = TestProbe()
 
-
+    "kill himself if the user isn't authenticated" in {
+      watcher3.watch(user3)
+      user3 ! User("notAuth", client3.ref)
+      watcher3.expectMsgClass(classOf[Terminated])
+    }
 
     "add the new user to the onlineUsers map" in {
       UserManager.loggedIn += "test"
@@ -37,6 +44,12 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "when polled send the client all online users" in {
       user ! Poll
       client.expectMsg(WrappedMessage(AllOnlineUsers("onlineUsers", Set("test")).toJson.prettyPrint))
+    }
+
+    "create room when requested" in {
+      user ! WrappedMessage("createRoom")
+      assert(OpenRooms.openRooms.size == 1)
+      client.expectMsg(WrappedMessage(RoomNumber("roomNumber", OpenRooms.openRooms.head._1).toJson.prettyPrint))
     }
 
     "add another new user to onlineUsers" in {
@@ -58,6 +71,12 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       client2.expectMsg(WrappedMessage(AllOnlineUsers("onlineUsers", Set("test", "test2")).toJson.prettyPrint))
     }
 
+    "create another room when requested" in {
+      user2 ! WrappedMessage("createRoom")
+      assert(OpenRooms.openRooms.size == 2)
+      client2.expectMsg(WrappedMessage(RoomNumber("roomNumber", 2).toJson.prettyPrint))
+    }
+
     "when user logs out remove the user from online users" in {
       watcher2.watch(user2)
       user2 ! WrappedMessage("logout")
@@ -73,6 +92,21 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "finally kill himself" in {
       watcher2.expectMsgClass(classOf[Terminated])
     }
+
+    "when another user logs out remove the user from online users" in {
+      watcher1.watch(user)
+      user ! WrappedMessage("logout")
+      assert(UserManager.onlineUsers.isEmpty)
+    }
+
+    "then remove the user from loggedIn" in {
+      assert(UserManager.loggedIn.isEmpty)
+    }
+
+    "then finally kill himself" in {
+      watcher1.expectMsgClass(classOf[Terminated])
+    }
+
   }
 
 }

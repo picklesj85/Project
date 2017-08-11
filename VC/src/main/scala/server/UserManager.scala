@@ -17,12 +17,15 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
   override def receive = {
 
     case user: User =>
-      if (!UserManager.loggedIn.contains(userName)) self ! PoisonPill // user has not authenticated
-      else
+      if (!UserManager.loggedIn.contains(userName))  { // user has not authenticated
+        self ! PoisonPill
+      } else {
         thisUser = user.actorRef
         UserManager.onlineUsers += userName -> thisUser
         thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
+      }
+
 
 
     case message: WrappedMessage => message.data match {
