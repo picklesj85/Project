@@ -3,7 +3,7 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpecLike}
 import server._
 import spray.json._
-
+import scala.concurrent.duration._
 
 class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) with ImplicitSender with WordSpecLike
   with Matchers with BeforeAndAfterAll with MyJsonProtocol {
@@ -38,6 +38,11 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "send the client all online users" in {
+      client.expectMsg(WrappedMessage(AllOnlineUsers("onlineUsers", Set("test")).toJson.prettyPrint))
+    }
+
+    "start the poll loop after 3 seconds" in {
+      Thread.sleep(3000)
       client.expectMsg(WrappedMessage(AllOnlineUsers("onlineUsers", Set("test")).toJson.prettyPrint))
     }
 
