@@ -38,12 +38,10 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
   val hangUp = "{\"tag\":\"hangUp\"}" // the string that a hangup message will come as
 
 
-  moderator ! User("Fred", client1.ref) // send a new client to the room
-
-
   "A room moderator" must {
 
     "send the room number to new members" in {
+      moderator ! User("Fred", client1.ref) // send a new client to the room
       client1.expectMsg(WrappedMessage(RoomID("roomID", 1, true).toJson.prettyPrint)) // true as 1st user so is caller
     }
 
@@ -51,14 +49,10 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
       moderator ! WrappedMessage("hello")
       client1.expectMsg(WrappedMessage("hello"))
     }
-  }
 
-
-  "When another client joins the same room a moderator" must {
-
-    moderator ! User("Sarah", client2.ref)
 
     "send the existing names to the new member" in {
+      moderator ! User("Sarah", client2.ref)
       client2.expectMsg(WrappedMessage(SendUser("user", "Fred").toJson.prettyPrint))
     }
 
@@ -69,47 +63,33 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
     "forward messages to all room members" in {
       moderator ! WrappedMessage("hi there")
       client1.expectMsg(WrappedMessage("hi there"))
-      client2.expectMsg(WrappedMessage("hello"))
       client2.expectMsg(WrappedMessage("hi there"))
     }
 
-  }
-
-  "when a third client joins a room a moderator" must {
-    moderator ! User("test", client3.ref)
-
-    "send the existing names to the new member" in {
+    "send the existing names to the third new member" in {
+      moderator ! User("test", client3.ref)
       client3.expectMsg(WrappedMessage(SendUser("user", "Fred").toJson.prettyPrint))
       client3.expectMsg(WrappedMessage(SendUser("user", "Sarah").toJson.prettyPrint))
     }
 
-    "send the new member the room number" in {
+    "send the third new member the room number" in {
       client3.expectMsg(WrappedMessage(RoomID("roomID", 1, false).toJson.prettyPrint))
     }
 
-    "forward messages to all room members" in {
+    "still forward messages to all room members" in {
       moderator ! WrappedMessage("three way")
       client1.expectMsg(WrappedMessage("three way"))
       client2.expectMsg(WrappedMessage("three way"))
-      client3.expectMsg(WrappedMessage("hello"))
-      client3.expectMsg(WrappedMessage("hi there"))
       client3.expectMsg(WrappedMessage("three way"))
     }
-  }
 
-  "When a client tries to join a non existent room a moderator" must {
-
-    val mod = TestActorRef(new RoomModerator(Room(Int.MinValue, system)))
-
-    "tell the client the room does not exist" in {
+    "when client tries to join no existent room, tell the client the room does not exist" in {
+      val mod = TestActorRef(new RoomModerator(Room(Int.MinValue, system)))
       mod ! User("test", client3.ref)
       client3.expectMsg(WrappedMessage(RoomError("roomError").toJson.prettyPrint))
     }
-  }
 
-  "When a hangUp message is received a room moderator" must {
-
-    "Kill each member of the room" in {
+    "when receives a hang up must Kill each member of the room" in {
       assert(OpenRooms.openRooms.size == 1)
 
       moderator ! WrappedMessage(hangUp)
@@ -119,11 +99,11 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
       deathWatch3.expectMsgClass(classOf[Terminated])
     }
 
-    "Delete the room" in {
+    "then delete the room" in {
       assert(OpenRooms.openRooms.isEmpty)
     }
 
-    "Kill himself" in {
+    "finally kill himself" in {
       grimReaper.expectMsgClass(classOf[Terminated])
     }
   }

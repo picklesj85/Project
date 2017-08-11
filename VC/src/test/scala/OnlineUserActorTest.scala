@@ -12,17 +12,17 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     TestKit.shutdownActorSystem(system)
   }
 
-  "An onlineUser actor" must {
+  val user = TestActorRef(new OnlineUser("test"))
+  val client = TestProbe()
+  val user2 = TestActorRef(new OnlineUser("test2"))
+  val client2 = TestProbe()
+  val user3 = TestActorRef(new OnlineUser("test3"))
+  val client3 = TestProbe()
+  val watcher1 = TestProbe()
+  val watcher2 = TestProbe()
+  val watcher3 = TestProbe()
 
-    val user = TestActorRef(new OnlineUser("test"))
-    val client = TestProbe()
-    val user2 = TestActorRef(new OnlineUser("test2"))
-    val client2 = TestProbe()
-    val user3 = TestActorRef(new OnlineUser("test3"))
-    val client3 = TestProbe()
-    val watcher1 = TestProbe()
-    val watcher2 = TestProbe()
-    val watcher3 = TestProbe()
+  "An onlineUser actor" must {
 
     "kill himself if the user isn't authenticated" in {
       watcher3.watch(user3)
