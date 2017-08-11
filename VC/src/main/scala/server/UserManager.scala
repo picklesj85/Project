@@ -7,8 +7,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 
-class OnlineUser(userName: String) extends Actor
-  with ActorLogging with MyJsonProtocol {
+class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonProtocol {
 
   import context._
 
