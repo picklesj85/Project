@@ -37,9 +37,8 @@ function startWebSocket() {
                 var userList = "";
                 for (var i = 0; i < onlineUsers.length; i++) {
                     if (onlineUsers[i] !== user) { // do not want to display our own name
-                        userList += "<li>" + onlineUsers[i] + "</li>";
+                        userList += "<li onclick='call(this.innerHTML)'>" + onlineUsers[i] + "</li>";
                     }
-
                 }
                 document.getElementById("onlineUsers").innerHTML = userList; // display the list
                 break;
@@ -55,6 +54,10 @@ function startWebSocket() {
         console.log("WebSocket Closed.")
     };
 
+}
+
+function call(onlineUser) {
+    msgServer("call" + onlineUser);
 }
 
 function createRoom() {

@@ -24,6 +24,8 @@ trait MyJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val wrappedMessageFormat = jsonFormat1(WrappedMessage)
   implicit val allOnlineUsers = jsonFormat2(AllOnlineUsers)
   implicit val roomNumber = jsonFormat2(RoomNumber)
+  implicit val sendCall = jsonFormat2(SendCall)
+  implicit val receiveCall = jsonFormat2(ReceiveCall)
 }
 
 

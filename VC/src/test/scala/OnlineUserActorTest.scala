@@ -82,6 +82,20 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       client2.expectMsg(WrappedMessage(RoomNumber("roomNumber", 2).toJson.prettyPrint))
     }
 
+    "will send call details to both users" in {
+      user ! WrappedMessage("calltest2")
+      assert(OpenRooms.openRooms.size == 3)
+      client2.expectMsg(WrappedMessage(ReceiveCall("receiveCall", 3).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(SendCall("sendCall", 3).toJson.prettyPrint))
+    }
+
+    "will send call details to the other user" in {
+      user2 ! WrappedMessage("calltest")
+      assert(OpenRooms.openRooms.size == 4)
+      client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", 4).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(SendCall("sendCall", 4).toJson.prettyPrint))
+    }
+
     "when user logs out remove the user from online users" in {
       watcher2.watch(user2)
       user2 ! WrappedMessage("logout")

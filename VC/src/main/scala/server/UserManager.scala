@@ -26,8 +26,6 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
       }
 
-
-
     case message: WrappedMessage => message.data match {
 
       case "logout" =>
@@ -38,6 +36,12 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
       case "createRoom" =>
         val room = OpenRooms.createRoom()
         thisUser ! WrappedMessage(RoomNumber("roomNumber", room.roomID).toJson.prettyPrint)
+
+      case call if call.take(4) == "call" =>
+        val callee = call.drop(4) // name of user to call
+        val room = OpenRooms.createRoom().roomID // room id for call
+        UserManager.onlineUsers(callee) ! WrappedMessage(ReceiveCall("receiveCall", room).toJson.prettyPrint) // send call request to callee
+        thisUser ! WrappedMessage(SendCall("sendCall", room).toJson.prettyPrint) // send room details to caller
     }
 
     case Poll =>
@@ -66,6 +70,8 @@ object UserManager {
 }
 
 case class AllOnlineUsers(tag: String, onlineUsers: Set[String])
+case class SendCall(tag: String, room: Int)
+case class ReceiveCall(tag: String, room: Int)
 case object Poll
 case class RoomNumber(tag: String, number: Int)
 
