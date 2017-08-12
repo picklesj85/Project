@@ -85,15 +85,35 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "will send call details to both users" in {
       user ! WrappedMessage("calltest2")
       assert(OpenRooms.openRooms.size == 3)
-      client2.expectMsg(WrappedMessage(ReceiveCall("receiveCall", 3).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test", 3).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(SendCall("sendCall", 3).toJson.prettyPrint))
     }
 
     "will send call details to the other user" in {
       user2 ! WrappedMessage("calltest")
       assert(OpenRooms.openRooms.size == 4)
-      client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", 4).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test2", 4).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(SendCall("sendCall", 4).toJson.prettyPrint))
+    }
+
+    "will send an accepted when receive accepted" in {
+      user ! WrappedMessage("acceptedtest2")
+      client2.expectMsg(WrappedMessage(Accepted("accepted").toJson.prettyPrint))
+    }
+
+    "will send an accepted the other way" in {
+      user2 ! WrappedMessage("acceptedtest")
+      client.expectMsg(WrappedMessage(Accepted("accepted").toJson.prettyPrint))
+    }
+
+    "will forward a reject on" in {
+      user ! WrappedMessage("rejectedtest2")
+      client2.expectMsg(WrappedMessage(Rejected("rejected").toJson.prettyPrint))
+    }
+
+    "will forward a reject on the other way" in {
+      user2 ! WrappedMessage("rejectedtest")
+      client.expectMsg(WrappedMessage(Rejected("rejected").toJson.prettyPrint))
     }
 
     "when user logs out remove the user from online users" in {

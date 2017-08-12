@@ -195,7 +195,7 @@ function startWebSocket() {
             case "roomError":
                 alert("The Room ID entered does not exist.");
                 webSocketConnection.close();
-                window.location.href = "/";
+                redirect();
                 break;
 
             case "user":

@@ -13,6 +13,9 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
 
   var thisUser: ActorRef = _
 
+  if (UserManager.onCall.contains(userName)) UserManager.onCall -= userName // no longer on a call so remove
+
+  def available = UserManager.loggedIn -- UserManager.onCall
 
   override def receive = {
 
@@ -22,7 +25,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
       } else {
         thisUser = user.actorRef
         UserManager.onlineUsers += userName -> thisUser
-        thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+        thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", available).toJson.prettyPrint)
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
       }
 
@@ -40,13 +43,24 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
       case call if call.take(4) == "call" =>
         val callee = call.drop(4) // name of user to call
         val room = OpenRooms.createRoom().roomID // room id for call
-        UserManager.onlineUsers(callee) ! WrappedMessage(ReceiveCall("receiveCall", room).toJson.prettyPrint) // send call request to callee
-        thisUser ! WrappedMessage(SendCall("sendCall", room).toJson.prettyPrint) // send room details to caller
+        UserManager.onlineUsers(callee) ! WrappedMessage(ReceiveCall("receiveCall", userName, room).toJson.prettyPrint) // send call request to callee
+        thisUser ! WrappedMessage(SendCall("sendCall", room).toJson.prettyPrint)
+
+      case accept if accept.take(8) == "accepted" =>
+        val caller = accept.drop(8)
+        UserManager.onlineUsers(caller) ! WrappedMessage(Accepted("accepted").toJson.prettyPrint)
+
+      case reject if reject.take(8) == "rejected" =>
+        val caller = reject.drop(8)
+        UserManager.onlineUsers(caller) ! WrappedMessage(Rejected("rejected").toJson.prettyPrint)
+
+      case "onCall" => UserManager.onCall += userName
     }
 
     case Poll =>
-      thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+      thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", available).toJson.prettyPrint)
       system.scheduler.scheduleOnce(3000.millis, self, Poll) // poll loop
+
   }
 
 
@@ -62,6 +76,8 @@ object UserManager {
   var onlineUsers: Map[String, ActorRef] = Map.empty[String, ActorRef] // current online users
   // use a map so that an update with username already in will just update the ActorRef
 
+  var onCall: Set[String] = Set.empty[String] // users currently logged in but already on a call
+
   def login(userName: String) = loggedIn += userName
 
   def logout(userName: String) = loggedIn -= userName
@@ -70,8 +86,10 @@ object UserManager {
 }
 
 case class AllOnlineUsers(tag: String, onlineUsers: Set[String])
+case class ReceiveCall(tag: String, user: String, room: Int)
+case class Accepted(tag: String)
+case class Rejected(tag: String)
 case class SendCall(tag: String, room: Int)
-case class ReceiveCall(tag: String, room: Int)
 case object Poll
 case class RoomNumber(tag: String, number: Int)
 

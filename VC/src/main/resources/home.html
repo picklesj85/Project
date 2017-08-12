@@ -23,13 +23,15 @@
 
     <input type="button" value="Create Room" onclick="createRoom()"><br>
 
-    <form action="room.html" method="get">
+    <form action="room.html" method="get" onclick="onCall()">
         Room number:<br>
         <input type="text" name="roomID"><br>
         <input type="hidden" name="userName" id="userName"><br>
         <input type="submit" value="Join">
     </form>
 
+    <p id="callTxt"></p>
+    <div id="calling"></div>
     <div>
         <h2 class="heading">Online Users</h2>
 

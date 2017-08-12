@@ -2,6 +2,7 @@
 var user;
 var serverAddress = "192.168.0.21:8080";
 var webSocket;
+var room;
 
 function loadFunction() {
     let params = (new URL(document.location)).searchParams;
@@ -47,6 +48,31 @@ function startWebSocket() {
                 alert("Please use room number: " + msg.number +
                     "\n\nMake sure you share this number with the far site.");
                 break;
+
+            case "receiveCall":
+                var caller = msg.user;
+                room = msg.room;
+                if (confirm("Incoming call from " + caller + ". \n\nAccept call?")) {
+                    msgServer("accepted" + caller);
+                    msgServer("onCall");
+                    window.location.href = "/room.html?roomID=" + room + "&userName=" + user;
+                } else {
+                    msgServer("rejected" + caller);
+                }
+                break;
+
+            case "sendCall":
+                room = msg.room;
+                break;
+
+            case "accepted":
+                msgServer("onCall");
+                window.location.href = "/room.html?roomID=" + room + "&userName=" + user;
+                break;
+
+            case "rejected":
+                alert("The far end has rejected your call.");
+                window.location.reload();
         }
     };
 
@@ -57,6 +83,8 @@ function startWebSocket() {
 }
 
 function call(onlineUser) {
+    document.getElementById("calling").setAttribute("class", "calling");
+    document.getElementById("callTxt").innerHTML = "Calling...";
     msgServer("call" + onlineUser);
 }
 
@@ -68,6 +96,11 @@ function logout() {
     msgServer("logout");
     window.location.href = "/";
 }
+
+function onCall() {
+    msgServer("onCall");
+}
+
 function msgServer (message) {
 
     try {
