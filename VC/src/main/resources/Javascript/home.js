@@ -61,6 +61,10 @@ function createRoom() {
     msgServer("createRoom");
 }
 
+function logout() {
+    msgServer("logout");
+    window.location.href = "/";
+}
 function msgServer (message) {
 
     try {
