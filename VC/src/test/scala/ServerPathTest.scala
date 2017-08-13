@@ -49,10 +49,17 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 //  OpenRooms.createRoom() // Room 1
 //  OpenRooms.createRoom() // Room 2
 
-  test("root path returns index.html") {
+  test("get on root path returns index.html") {
     Get() ~> ws ~> check {
       status shouldBe OK
       responseAs[String] shouldEqual Source.fromResource("index.html").mkString
+    }
+  }
+
+  test("post on root path returns room number") {
+    Post() ~> ws ~> check {
+      status shouldBe OK
+      responseAs[String] shouldEqual "1"
     }
   }
 
@@ -252,7 +259,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
 
 
-      assert(OpenRooms.openRooms.size == 5) // for now as creating new room every time there is a new webSocket
+      assert(OpenRooms.openRooms.size == 6) // for now as creating new room every time there is a new webSocket
 
       wsClient2Room2.sendMessage("Test")
       wsClient2Room2.expectMessage("Test")

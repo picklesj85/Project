@@ -50,6 +50,47 @@ object DBConnector {
       statement.executeUpdate(s"DELETE FROM USERS WHERE USERNAME = '$name' AND PASSWORD = '$password'") == 1 // check both for security
     }
   }
+
+  def getMyContacts(name: String, connection: Connection): Set[String] = {
+    val statement = connection.createStatement()
+    val resultSet = statement.executeQuery(s"SELECT CONTACT1 FROM CONTACTS WHERE CONTACT2 = '$name' " +
+                                           s"UNION " +
+                                           s"SELECT CONTACT2 FROM CONTACTS WHERE CONTACT1 = '$name'")
+    new Iterator[String] {
+      def hasNext = resultSet.next()
+      def next() = resultSet.getString(1)
+    }.toSet
+  }
+
+  def getPendingContacts(name: String, connection: Connection): Set[String] = {
+    val statement = connection.createStatement()
+    val resultSet = statement.executeQuery(s"SELECT REQUESTOR FROM PENDING WHERE REQUESTEE = '$name'")
+
+    new Iterator[String] {
+      def hasNext = resultSet.next()
+      def next() = resultSet.getString(1)
+    }.toSet
+  }
+
+  def newContact(contact1: String, contact2: String, connection: Connection): Boolean = {
+    val statement = connection.createStatement()
+    statement.executeUpdate(s"INSERT INTO CONTACTS VALUES('$contact1', '$contact2')") == 1
+  }
+
+  def newPendingContact(requestor: String, requestee: String, connection: Connection): Boolean = {
+    val statement = connection.createStatement()
+    statement.executeUpdate(s"INSERT INTO PENDING VALUES('$requestor', '$requestee')") == 1
+  }
+
+  def searchContacts(search: String, connection: Connection): Set[String] = {
+    val statement = connection.createStatement()
+    val resultSet = statement.executeQuery(s"SELECT USERNAME FROM USERS WHERE USERNAME LIKE '$search%'")
+
+    new Iterator[String] {
+      def hasNext = resultSet.next()
+      def next() = resultSet.getString(1)
+    }.toSet
+  }
 }
 
 

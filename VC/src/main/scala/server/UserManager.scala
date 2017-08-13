@@ -1,6 +1,7 @@
 package server
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
+import database.DBConnector
 import spray.json._
 
 import scala.concurrent.ExecutionContext
@@ -28,6 +29,9 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", available).toJson.prettyPrint)
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
       }
+      // 1. call DBConnector to get list of myContacts and pendingContacts
+      // 2. split list of myContacts into online and offline
+      // 3. send to client pendingContacts, myOnlineContacts, myOfflineContacts
 
     case message: WrappedMessage => message.data match {
 
@@ -55,6 +59,8 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         UserManager.onlineUsers(caller) ! WrappedMessage(Rejected("rejected").toJson.prettyPrint)
 
       case "onCall" => UserManager.onCall += userName
+
+      // case searchContacts
 
     }
 

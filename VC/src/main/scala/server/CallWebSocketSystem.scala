@@ -57,7 +57,8 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
         member.actorRef ! m
         log.info("Sent to " + member.userName + ": " + m.data)
       })
-      if (!connected) system.scheduler.scheduleOnce(500.millis, self, m)
+      if (!connected) system.scheduler.scheduleOnce(500.millis, self, m) // keep sending each message until connected
+                                                                         // in case of undelivered messages
       if (m.data == hangUp) {
         roomMembers.foreach(member => {
           member.actorRef ! PoisonPill
@@ -67,7 +68,6 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
         log.info("Deleting room " + roomID)
         self ! PoisonPill
       }
-
 
     case user: User =>
       if (roomID != Int.MinValue) {

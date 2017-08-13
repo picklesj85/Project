@@ -5,16 +5,20 @@
     <title>Instant VC - Welcome</title>
 
     <link rel="stylesheet" href="css">
+    <script src="jquery"></script>
     <script>
         function createRoom() {
-
+            $.post("", function (data) {
+                alert("Please use room number: " + data.toString() +
+                      "\n\nMake sure you share this number with the far site.");
+            });
         }
     </script>
 
 </head>
 <body class="center">
 
-    <h1 class="heading">Please enter the Room you would like to join. If you do not have a Room please create one.</h1>
+    <h1 class="heading">Please enter the room you would like to join. If you do not have a Room please create one.</h1>
     <br><br>
     <input type="button" value="Create Room" onclick="createRoom()">
 

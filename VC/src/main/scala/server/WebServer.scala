@@ -36,6 +36,10 @@ object WebServer extends HttpApp {
     pathEndOrSingleSlash {
       get {
         index
+      } ~
+      post {
+        val room = OpenRooms.createRoom()
+        complete(room.roomID.toString)
       }
     } ~
     pathPrefix("credentials") {

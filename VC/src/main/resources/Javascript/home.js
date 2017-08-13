@@ -73,13 +73,30 @@ function startWebSocket() {
             case "rejected":
                 alert("The far end has rejected your call.");
                 window.location.reload();
+
+            // case onlineContacts
+            // case offlineContacts
+            // case pendingContacts
+            // case searchContacts
         }
     };
 
     webSocket.onclose = function() {
-        console.log("WebSocket Closed.")
+        console.log("WebSocket Closed.");
         startWebSocket();
     };
+
+}
+
+function declineContact(contact) {
+    // message server eg "declineJames"
+}
+
+function acceptContact(contact) {
+    // message server eg "acceptJames"
+}
+
+function searchContacts(){
 
 }
 
