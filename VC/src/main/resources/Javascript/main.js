@@ -23,11 +23,7 @@ var attendees = [];
 var constraints = {video: true, audio: true};
 
 
-
-
-
 function getMedia() {
-
 
     navigator.mediaDevices.getUserMedia(constraints).then(function(localMediaStream) {
         var localVideoFeed = document.getElementById('localVideoFeed');
@@ -42,8 +38,7 @@ function getMedia() {
         alert(err.name + ": " + err.message + "\n\n in startCall() getUserMedia()");
         console.log(err);
     });
-    
-    //prepareWebSocket();
+
 }
 
 function prepareWebSocket() {
@@ -63,6 +58,10 @@ function prepareWebSocket() {
 }
 
 function startNegotiating() {
+    if (localPC.signalingState === "have-local-offer") {
+        return; // already have local offer
+    }
+
     localPC.createOffer().then(function (offer) {
         return localPC.setLocalDescription(offer);
     }).then(function () {
@@ -136,9 +135,7 @@ function receivedOffer(offer) {
             startWebSocket();
         }
     }, 500);
-
 }
-
 
 function receivedAnswer(answer) {
 
@@ -177,7 +174,6 @@ function startWebSocket() {
         $attendees = $("#attendees"),
         $attendeeList = $("#attendeeList"),
         $title = $("#title");
-
 
     webSocketConnection = new WebSocket(wsURL);
 
@@ -316,7 +312,6 @@ function newPeerConnection() {
             console.log("connected");
         }
     }
-
 }
 
 function iceFailed() {
