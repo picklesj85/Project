@@ -78,6 +78,7 @@ function startWebSocket() {
 
     webSocket.onclose = function() {
         console.log("WebSocket Closed.")
+        startWebSocket();
     };
 
 }

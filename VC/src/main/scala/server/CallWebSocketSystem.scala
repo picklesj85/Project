@@ -6,6 +6,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import DefaultJsonProtocol._
+import scala.concurrent.duration._
+
 
 
 
@@ -39,6 +41,9 @@ case class Room(roomID: Int, actorSystem: ActorSystem) {
 
 class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProtocol {
 
+  import context._
+
+  var connected = false
   var roomMembers: Set[User] = Set.empty[User]
   val roomID = room.roomID
   val hangUp = "{\"tag\":\"hangUp\"}" // the string that a hangup message will come as
@@ -46,10 +51,13 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
   override def receive = {
     case m: WrappedMessage =>
       //log.info(m.data)
+      if (m.data == "connected") connected = true
+
       roomMembers.foreach(member => {
         member.actorRef ! m
         log.info("Sent to " + member.userName + ": " + m.data)
       })
+      if (!connected) system.scheduler.scheduleOnce(500.millis, self, m)
       if (m.data == hangUp) {
         roomMembers.foreach(member => {
           member.actorRef ! PoisonPill

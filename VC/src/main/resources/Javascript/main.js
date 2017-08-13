@@ -8,13 +8,15 @@ var webSocketConnection = null;
 
 
 var localPC = null; // change name?
-var SDPOffer;
-var SDPAnswer = "not yet defined";
+var SDPOffer = null;
+var SDPAnswer = null;
 var caller;
 var callEnded = false;
 var myMediaStream;
 var offerFailed = true;
 var answerFailed = true;
+var gotOffer = false;
+var gotAnswer = false;
 
 var attendees = [];
 
@@ -85,16 +87,22 @@ function startNegotiating() {
             newPeerConnection();
             startWebSocket();
         }
-    }, 200);
+    }, 500);
 }
 
 function receivedOffer(offer) {
+
+    if (gotOffer) {
+        return;
+    }
 
     if (offer.user === userName) {
         offerFailed = false; // the server has relayed my offer so I know my connection is good
 
         return; // this is your own offer!
     }
+
+    gotOffer = true;
 
     console.log("Received offer");
 
@@ -120,12 +128,12 @@ function receivedOffer(offer) {
 
     setTimeout(function () { // timeout function for when sending the answer has failed
         if (answerFailed) {
-        //    localPC.close();
+            localPC.close();
             webSocketConnection.close();
-         //   newPeerConnection();
+            gotOffer = false;
+            newPeerConnection();
          //   prepareWebSocket();
             startWebSocket();
-            msgServer(SDPAnswer);
         }
     }, 500);
 
@@ -134,11 +142,20 @@ function receivedOffer(offer) {
 
 function receivedAnswer(answer) {
 
+    if (gotAnswer) {
+        return;
+    }
+
     if (answer.user === userName) {
         answerFailed = false; // the server has relayed my offer so I know my connection is good
         return; // own answer
     }
 
+    gotAnswer = true;
+
+    if (localPC.signalingState === "stable") {
+        return; // already connected
+    }
     console.log("Received Answer");
     //alert("received answer");
 
@@ -292,6 +309,13 @@ function newPeerConnection() {
     //         iceFailed();
     //     }
     // }
+    localPC.onsignalingstatechange = function () {
+        if ((localPC.signalingState === "stable" && !offerFailed) ||
+            (localPC.signalingState === "stable" && !answerFailed)) {
+            webSocketConnection.send("connected");
+            console.log("connected");
+        }
+    }
 
 }
 
@@ -318,7 +342,7 @@ function handleICECandidateEvent(event) {
 
 function newICECandidateMessage(msg) {
 
-    if (msg.user === userName) {
+    if (msg.user === userName || (caller && !gotAnswer) || (!caller && !gotOffer)) {
         return; // own message!
     }
 

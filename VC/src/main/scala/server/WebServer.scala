@@ -196,6 +196,7 @@ object WebServer extends HttpApp {
 
   def main(args: Array[String]): Unit = {
     WebServer.startServer("192.168.0.21", 8080)
+    OpenRooms.createRoom() // here for testing so I don't need to constantly create one
     system.terminate()
   }
 
