@@ -120,10 +120,12 @@ function receivedOffer(offer) {
 
     setTimeout(function () { // timeout function for when sending the answer has failed
         if (answerFailed) {
-            localPC.close();
+        //    localPC.close();
             webSocketConnection.close();
          //   newPeerConnection();
-            prepareWebSocket();
+         //   prepareWebSocket();
+            startWebSocket();
+            msgServer(SDPAnswer);
         }
     }, 500);
 
@@ -180,8 +182,13 @@ function startWebSocket() {
     };
 
     webSocketConnection.onerror = function (error) {
-        console.log("WebSocket error " + error);
+        console.log("WebSocket error " + error.toString());
         console.log(error);
+        // if (caller && offerFailed)
+        // webSocketConnection.close();
+        // offerFailed = true;
+        // answerFailed = true;
+        // prepareWebSocket();
     };
 
     webSocketConnection.onmessage = function (evt) {
@@ -200,11 +207,11 @@ function startWebSocket() {
 
             case "user":
                 if (msg.userName !== userName) {
-                    if (caller) {
-                        if (!offerFailed) { // the other side has a connection issue so need to start over.
-                            localPC.close();
-                            newPeerConnection();
-                        }
+                    if (caller && offerFailed) {
+                        // if (!offerFailed) { // the other side has a connection issue so need to start over.
+                        //     localPC.close();
+                        //     newPeerConnection();
+                        // }
                         startNegotiating();
                     }
                 }
@@ -279,11 +286,12 @@ function newPeerConnection() {
 
     localPC.onicecandidate = handleICECandidateEvent;
     localPC.ontrack = handleTrackEvent;
-    localPC.oniceconnectionstatechange = function () {
-        if (localPC.iceConnectionState === "failed") {
-            iceFailed();
-        }
-    }
+    // localPC.oniceconnectionstatechange = function () {
+    //     if (localPC.iceConnectionState === "failed" ||
+    //         localPC.iceConnectionState === "closed") {
+    //         iceFailed();
+    //     }
+    // }
 
 }
 
@@ -292,7 +300,7 @@ function iceFailed() {
     webSocketConnection.close();
     offerFailed = true;
     answerFailed = true;
-    newPeerConnection();
+   // newPeerConnection();
     prepareWebSocket();
 }
 
@@ -309,7 +317,6 @@ function handleICECandidateEvent(event) {
 }
 
 function newICECandidateMessage(msg) {
-
 
     if (msg.user === userName) {
         return; // own message!

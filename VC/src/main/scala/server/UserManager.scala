@@ -55,6 +55,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         UserManager.onlineUsers(caller) ! WrappedMessage(Rejected("rejected").toJson.prettyPrint)
 
       case "onCall" => UserManager.onCall += userName
+
     }
 
     case Poll =>

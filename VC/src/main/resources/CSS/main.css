@@ -49,6 +49,22 @@
 
 .onlineUsers {
     list-style-type: none;
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: normal;
+    color: #3498db;
+    text-decoration: underline;
+}
+
+.onlineUsers li:hover {
+    cursor: pointer;
+    cursor: hand;
+    list-style-type: none;
+    font-family: Calibri;
+    font-style: normal;
+    font-weight: normal;
+    color: red;
+    text-decoration: underline;
 }
 
 .user {

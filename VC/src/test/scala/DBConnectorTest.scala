@@ -44,15 +44,15 @@ class DBConnectorTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("create new user") {
-    assert(DBConnector.createUser("test", "test", connection))
+    assert(DBConnector.createUser("testUser", "test", connection))
   }
 
   test("create new user but name already exists") {
-    assert(!DBConnector.createUser("test", "test", connection))
+    assert(!DBConnector.createUser("testUser", "test", connection))
   }
 
   test("delete user") {
-    assert(DBConnector.deleteUser("test", "test", connection))
+    assert(DBConnector.deleteUser("testUser", "test", connection))
   }
 
   test("delete non-existing user") {
