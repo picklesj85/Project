@@ -13,10 +13,10 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
   import context._
 
   var thisUser: ActorRef = _
+  var contacts: Set[String] = _
+  var pending: Set[String] = _
 
   if (UserManager.onCall.contains(userName)) UserManager.onCall -= userName // no longer on a call so remove
-
-  def available = UserManager.loggedIn -- UserManager.onCall
 
   override def receive = {
 
@@ -25,13 +25,14 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         self ! PoisonPill
       } else {
         thisUser = user.actorRef
+        updateContacts
         UserManager.onlineUsers += userName -> thisUser
-        thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", available).toJson.prettyPrint)
-        system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update the client
+        sendUpdate
+        thisUser ! WrappedMessage(PendingContacts("pending", getOnlineContacts).toJson.prettyPrint)
+        system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update who's online
       }
-      // 1. call DBConnector to get list of myContacts and pendingContacts
-      // 2. split list of myContacts into online and offline
-      // 3. send to client pendingContacts, myOnlineContacts, myOfflineContacts
+
+
 
     case message: WrappedMessage => message.data match {
 
@@ -61,15 +62,34 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
       case "onCall" => UserManager.onCall += userName
 
       // case searchContacts
+      // case respond (e.g. respondAccept or respondDecline) write to DB and updateContacts
 
     }
 
     case Poll =>
-      thisUser ! WrappedMessage(AllOnlineUsers("onlineUsers", available).toJson.prettyPrint)
+      sendUpdate
       system.scheduler.scheduleOnce(3000.millis, self, Poll) // poll loop
+  }
+
+  def available = UserManager.loggedIn diff UserManager.onCall
+
+  def getOnlineContacts = available intersect contacts
+
+  def getOfflineContacts = contacts diff getOnlineContacts
+
+  def sendUpdate = {
+    thisUser ! WrappedMessage(OnlineContacts("online", getOnlineContacts).toJson.prettyPrint)
+    thisUser ! WrappedMessage(OfflineContacts("offline", getOfflineContacts).toJson.prettyPrint)
 
   }
 
+  def updateContacts = {
+    val connection = DBConnector.connect
+    contacts = DBConnector.getMyContacts(userName, connection)
+    pending = DBConnector.getPendingContacts(userName, connection)
+    thisUser ! WrappedMessage(PendingContacts("pending", getOnlineContacts).toJson.prettyPrint)
+    connection.close()
+  }
 
 }
 
@@ -92,7 +112,9 @@ object UserManager {
 
 }
 
-case class AllOnlineUsers(tag: String, onlineUsers: Set[String])
+case class OnlineContacts(tag: String, onlineContacts: Set[String])
+case class OfflineContacts(tag: String, offlineContacts: Set[String])
+case class PendingContacts(tag: String, pendingContacts: Set[String])
 case class ReceiveCall(tag: String, user: String, room: Int)
 case class Accepted(tag: String)
 case class Rejected(tag: String)
