@@ -28,7 +28,6 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         updateContacts
         UserManager.onlineUsers += userName -> thisUser
         sendUpdate
-        thisUser ! WrappedMessage(PendingContacts("pending", getOnlineContacts).toJson.prettyPrint)
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update who's online
       }
 
@@ -87,7 +86,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
     val connection = DBConnector.connect
     contacts = DBConnector.getMyContacts(userName, connection)
     pending = DBConnector.getPendingContacts(userName, connection)
-    thisUser ! WrappedMessage(PendingContacts("pending", getOnlineContacts).toJson.prettyPrint)
+    thisUser ! WrappedMessage(PendingContacts("pending", pending).toJson.prettyPrint)
     connection.close()
   }
 

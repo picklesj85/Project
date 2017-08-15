@@ -41,16 +41,13 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     DBConnector.newContact("test3", "tim", connection)
     DBConnector.newContact("al", "test3", connection)
     DBConnector.newContact("test3", "fay", connection)
-
-
-    connection.close()
   }
   override def afterAll: Unit = {
     val statement = connection.createStatement()
 
-    statement.executeUpdate("DELETE FROM CONTACT WHERE CONTACT1 = 'test1'  OR CONTACT2 = 'test1'")
-    statement.executeUpdate("DELETE FROM CONTACT WHERE CONTACT1 = 'test2'  OR CONTACT2 = 'test2'")
-    statement.executeUpdate("DELETE FROM CONTACT WHERE CONTACT1 = 'test3'  OR CONTACT2 = 'test3'")
+    statement.executeUpdate("DELETE FROM CONTACTS WHERE CONTACT1 = 'test1'  OR CONTACT2 = 'test1'")
+    statement.executeUpdate("DELETE FROM CONTACTS WHERE CONTACT1 = 'test2'  OR CONTACT2 = 'test2'")
+    statement.executeUpdate("DELETE FROM CONTACTS WHERE CONTACT1 = 'test3'  OR CONTACT2 = 'test3'")
 
     statement.executeUpdate("DELETE FROM PENDING WHERE REQUESTEE = 'test1'")
     statement.executeUpdate("DELETE FROM PENDING WHERE REQUESTEE = 'test2'")
@@ -70,6 +67,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
     assert(DBContactCount == endContactCount)
     assert(DBPendingCount == endPendingCount)
+
     connection.close()
     TestKit.shutdownActorSystem(system)
   }
@@ -103,9 +101,9 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "send the client all contacts" in {
+      client.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(OnlineContacts("online", Set("james")).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(OfflineContacts("offline", Set("sarah")).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
     }
 
     "start the poll loop after 3 seconds" in {
@@ -117,7 +115,8 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "when polled send the client all online users" in {
       UserManager.loggedIn += "sarah"
       user ! Poll
-      client.expectMsg(WrappedMessage(OnlineContacts("online", Set("james", "sarah")).toJson.prettyPrint))
+      val onlineSet = Set("james", "sarah")
+      client.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(OfflineContacts("offline", Set()).toJson.prettyPrint))
     }
 
@@ -136,16 +135,18 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "and send the client all online users" in {
+      val pendingSet = Set("mike", "terry")
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", pendingSet).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(OnlineContacts("online", Set()).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(OfflineContacts("offline", Set("dave")).toJson.prettyPrint))
-      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set("mike", "terry")).toJson.prettyPrint))
     }
 
     "when both polled send both clients all online users" in {
       UserManager.loggedIn += "dave"
       user ! Poll
       user2 ! Poll
-      client.expectMsg(WrappedMessage(OnlineContacts("online", Set("james", "sarah")).toJson.prettyPrint))
+      val onlineSet = Set("sarah", "james")
+      client.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(OfflineContacts("offline", Set()).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(OnlineContacts("online", Set("dave")).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(OfflineContacts("offline", Set()).toJson.prettyPrint))
@@ -165,7 +166,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "will send call details to the other user" in {
-      user2 ! WrappedMessage("calltest")
+      user2 ! WrappedMessage("calltest1")
       assert(OpenRooms.openRooms.size == 4)
       client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test2", 4).toJson.prettyPrint))
       client2.expectMsg(WrappedMessage(SendCall("sendCall", 4).toJson.prettyPrint))
@@ -177,7 +178,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "will send an accepted the other way" in {
-      user2 ! WrappedMessage("acceptedtest")
+      user2 ! WrappedMessage("acceptedtest1")
       client.expectMsg(WrappedMessage(Accepted("accepted").toJson.prettyPrint))
     }
 
@@ -187,39 +188,45 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     }
 
     "will forward a reject on the other way" in {
-      user2 ! WrappedMessage("rejectedtest")
+      user2 ! WrappedMessage("rejectedtest1")
       client.expectMsg(WrappedMessage(Rejected("rejected").toJson.prettyPrint))
     }
 
     "checking a third user" in {
-      UserManager.loggedIn += "test1"
+      UserManager.loggedIn += "test3"
       UserManager.loggedIn += "pete"
       UserManager.loggedIn += "tim"
       UserManager.loggedIn += "fay"
-      user3 ! User("test3", client.ref)
+      user3 ! User("test3", client3.ref)
       assert(UserManager.onlineUsers.contains("test3"))
-      assert(UserManager.onlineUsers("test3") == client.ref)
+      assert(UserManager.onlineUsers("test3") == client3.ref)
     }
 
     "still send the client all contacts" in {
-      client.expectMsg(WrappedMessage(OnlineContacts("online", Set("pete", "tim", "fay")).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(OfflineContacts("offline", Set("al")).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(PendingContacts("pending", Set("dan")).toJson.prettyPrint))
+      val onlineSet = Set("fay", "pete", "tim")
+      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set("dan")).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(OfflineContacts("offline", Set("al")).toJson.prettyPrint))
     }
 
     "still when polled send the client all online users" in {
       UserManager.loggedIn += "al"
       UserManager.loggedIn -= "fay"
       UserManager.loggedIn -= "pete"
-      user ! Poll
-      client.expectMsg(WrappedMessage(OnlineContacts("online", Set("tim", "al")).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(OfflineContacts("offline", Set("fay", "pete")).toJson.prettyPrint))
+      val onlineSet = Set("tim", "al")
+      val offlineSet = Set("pete", "fay")
+      user3 ! Poll
+      client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(OfflineContacts("offline", offlineSet).toJson.prettyPrint))
     }
 
-    "when user logs out remove the user from online users" in {
+
+
+    "when user logs out remove the user from online users and logged in" in {
+      UserManager.loggedIn = Set("test1", "test2")
       watcher2.watch(user2)
       user2 ! WrappedMessage("logout")
-      assert(UserManager.onlineUsers.size == 1)
+      assert(UserManager.onlineUsers.size == 2)
       assert(!UserManager.onlineUsers.contains("test2"))
     }
 
@@ -235,7 +242,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "when another user logs out remove the user from online users" in {
       watcher1.watch(user)
       user ! WrappedMessage("logout")
-      assert(UserManager.onlineUsers.isEmpty)
+      assert(UserManager.onlineUsers.size == 1)
     }
 
     "then remove the user from loggedIn" in {
