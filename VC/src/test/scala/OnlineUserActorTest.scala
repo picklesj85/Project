@@ -15,13 +15,13 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
   val DBContactCount = {
     val statement = connection.createStatement()
     val result = statement.executeQuery("SELECT COUNT(*) FROM CONTACTS")
-    result.next()
+    if (result.next()) result.getInt(1) else Int.MinValue
   }
 
   val DBPendingCount = {
     val statement = connection.createStatement()
     val result = statement.executeQuery("SELECT COUNT(*) FROM PENDING")
-    result.next()
+    if (result.next()) result.getInt(1) else Int.MinValue
   }
 
   override def beforeAll(): Unit = {
@@ -36,7 +36,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     DBConnector.newContact("dave", "test2", connection)
 
     // test 3 profile
-    DBConnector.newPendingContact("dan", "test3", connection)
+    DBConnector.newPendingContact("test1", "test3", connection)
     DBConnector.newContact("pete", "test3", connection)
     DBConnector.newContact("test3", "tim", connection)
     DBConnector.newContact("al", "test3", connection)
@@ -56,13 +56,13 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     val endContactCount = {
       val statement = connection.createStatement()
       val result = statement.executeQuery("SELECT COUNT(*) FROM CONTACTS")
-      result.next()
+      if (result.next()) result.getInt(1) else Int.MinValue
     }
 
     val endPendingCount = {
       val statement = connection.createStatement()
       val result = statement.executeQuery("SELECT COUNT(*) FROM PENDING")
-      result.next()
+      if (result.next()) result.getInt(1) else Int.MinValue
     }
 
     assert(DBContactCount == endContactCount)
@@ -215,7 +215,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
     "still send the client all contacts" in {
       val onlineSet = Set("fay", "pete", "tim")
-      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set("dan")).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set("test1")).toJson.prettyPrint))
       client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
       client3.expectMsg(WrappedMessage(OfflineContacts("offline", Set("al")).toJson.prettyPrint))
     }
@@ -226,6 +226,54 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       UserManager.loggedIn -= "pete"
       val onlineSet = Set("tim", "al")
       val offlineSet = Set("pete", "fay")
+      user3 ! Poll
+      client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(OfflineContacts("offline", offlineSet).toJson.prettyPrint))
+    }
+
+    "accept request creates contact" in {
+      user3 ! WrappedMessage("respondaccepttest1")
+      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
+      val onlineSet = Set("test1", "tim", "al")
+      val offlineSet = Set("fay", "pete")
+      user3 ! Poll
+      client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
+      client3.expectMsg(WrappedMessage(OfflineContacts("offline", offlineSet).toJson.prettyPrint))
+    }
+
+    "reject request deletes from pending" in {
+      user2 ! WrappedMessage("respondrejectmike")
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set("terry")).toJson.prettyPrint))
+      user2 ! WrappedMessage("respondrejectterry")
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
+      user2 ! Poll
+      client2.expectMsg(WrappedMessage(OnlineContacts("online", Set("dave")).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(OfflineContacts("offline", Set()).toJson.prettyPrint))
+    }
+
+    "request updates pending and notifies other user" in {
+      user ! WrappedMessage("requesttest2")
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set("test1")).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
+    }
+
+    "request updates pending then accept updates contacts" in {
+      user2 ! WrappedMessage("requesttest3")
+      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set("test2")).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set("test1")).toJson.prettyPrint))
+
+      user3 ! WrappedMessage("respondaccepttest2")
+      client3.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(PendingContacts("pending", Set("test1")).toJson.prettyPrint))
+
+      user2 ! Poll
+      client2.expectMsg(WrappedMessage(OnlineContacts("online", Set("test3", "dave")).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(OfflineContacts("offline", Set()).toJson.prettyPrint))
+
+      user3 ! Poll
+      val onlineSet = Set("test1", "test2", "tim", "al")
+      val offlineSet = Set("fay", "pete")
       user3 ! Poll
       client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
       client3.expectMsg(WrappedMessage(OfflineContacts("offline", offlineSet).toJson.prettyPrint))

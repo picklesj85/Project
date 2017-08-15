@@ -13,7 +13,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
 
   import context._
 
-  var thisUser: ActorRef = _
+  var thisUser: ActorRef = _ // represents the actorRef that materialises from the webSocket
   var contacts: Set[String] = _
   var pending: Set[String] = _
 
@@ -28,6 +28,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         thisUser = user.actorRef
         updateContacts
         UserManager.onlineUsers += userName -> thisUser
+        UserManager.userActors += userName -> self
         sendUpdate
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update who's online
       }
@@ -39,6 +40,7 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
       case "logout" =>
         UserManager.onlineUsers -= userName
         UserManager.loggedIn -= userName
+        UserManager.userActors -= userName
         self ! PoisonPill
 
       case "createRoom" =>
@@ -66,13 +68,33 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         val searchResults: Set[String] = DBConnector.searchContacts(search.drop(6), connection)
         thisUser ! WrappedMessage(Results("search", searchResults).toJson.prettyPrint)
 
-      // case respond (e.g. respondAccept or respondDecline) write to DB and updateContacts
-      // case request
+      case respond if respond.take(7) == "respond" => // full string eg respondacceptjames or respondrejectjames
+        val connection = DBConnector.connect
+        val requestor = respond.drop(13)
+        if (respond.substring(7, 13) == "accept") {
+          DBConnector.newContact(requestor, userName, connection) // accepted so crete new contact
+          if (available.contains(requestor)) UserManager.userActors(requestor) ! Update // let the requestor know you have accepted
+        } else {
+          DBConnector.deletePending(requestor, userName, connection) // contact request rejected so just delete the pending request
+        }
+        updateContacts
+
+
+      case request if request.take(7) == "request" =>
+        val requestee = request.drop(7)
+        val connection = DBConnector.connect
+        DBConnector.newPendingContact(userName, requestee, connection)
+        if (available.contains(requestee)) UserManager.userActors(requestee) ! Update // let the requestee know they have a new request
+        updateContacts
+
+
     }
 
     case Poll =>
       sendUpdate
       system.scheduler.scheduleOnce(3000.millis, self, Poll) // poll loop
+
+    case Update => updateContacts
   }
 
   def available = UserManager.loggedIn diff UserManager.onCall
@@ -104,8 +126,10 @@ object UserManager {
 
   var loggedIn: Set[String] = Set.empty[String] // list of users that have authenticated for security
 
-  var onlineUsers: Map[String, ActorRef] = Map.empty[String, ActorRef] // current online users
+  var onlineUsers: Map[String, ActorRef] = Map.empty[String, ActorRef] // current online users and the client actorRef
   // use a map so that an update with username already in will just update the ActorRef
+
+  var userActors: Map[String, ActorRef] = Map.empty[String, ActorRef] // Map of actors for OnlineUser actor for sending update messages
 
   var onCall: Set[String] = Set.empty[String] // users currently logged in but already on a call
 
@@ -125,6 +149,7 @@ case class Accepted(tag: String)
 case class Rejected(tag: String)
 case class SendCall(tag: String, room: Int)
 case object Poll
+case object Update
 case class RoomNumber(tag: String, number: Int)
 case class Results(tag: String, results: Set[String])
 

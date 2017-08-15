@@ -24,11 +24,15 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
   override def beforeAll { // write test entry to database
     DBConnector.createUser("testUser", "testPassword", connection)
+    DBConnector.newPendingContact("test", "testUser", connection)
+    DBConnector.newContact("anotherTest", "testUser", connection)
   }
 
   override def afterAll: Unit = { // delete test entry
     DBConnector.deleteUser("testUser", "testPassword", connection)
     DBConnector.deleteUser("newUser", "newPassword", connection)
+    connection.createStatement().executeUpdate("DELETE FROM CONTACTS WHERE CONTACT2 = 'testUser'")
+    connection.createStatement().executeUpdate("DELETE FROM PENDING WHERE REQUESTEE = 'testUser'")
     connection.close()
   }
 
@@ -313,26 +317,28 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(!OpenRooms.openRooms.contains(2))
     }
   }
-//
-//  test("test the loggedIn webSocket path one logged in user") {
-//
-//    UserManager.loggedIn += "James"
-//
-//    WS("/loggedIn?user=James", wsClient1.flow) ~> ws ~> check {
-//
-//      isWebSocketUpgrade shouldEqual true
-//
-//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//
-//      assert(UserManager.onlineUsers.size == 1)
-//      assert(UserManager.onlineUsers.head._1 == "James")
-//
-//      Thread.sleep(3000)
-//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//
-//    }
-//  }
-//
+
+  test("test the loggedIn webSocket path one logged in user") {
+
+    UserManager.loggedIn += "testUser"
+
+    WS("/loggedIn?user=testUser", wsClient1.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient1.expectMessage(PendingContacts("pending", Set("test")).toJson.prettyPrint)
+      wsClient1.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+      wsClient1.expectMessage(OfflineContacts("offline", Set("anotherTest")).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 1)
+      assert(UserManager.onlineUsers.head._1 == "testUser")
+
+      Thread.sleep(3000)
+      wsClient1.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+      wsClient1.expectMessage(OfflineContacts("offline", Set("anotherTest")).toJson.prettyPrint)
+    }
+  }
+
 //  test("test the loggedIn webSocket path two logged in users") {
 //
 //    UserManager.loggedIn += "Sarah"
@@ -341,7 +347,9 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 //
 //      isWebSocketUpgrade shouldEqual true
 //
-//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//      wsClient2.expectMessage(PendingContacts("pending", Set()).toJson.prettyPrint)
+//      wsClient2.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+//      wsClient2.expectMessage(OfflineContacts("offline", Set()).toJson.prettyPrint)
 //
 //      assert(UserManager.onlineUsers.size == 2)
 //      assert(UserManager.onlineUsers.contains("Sarah"))
@@ -352,7 +360,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 //
 //    }
 //  }
-//
+
 //  test("test the loggedIn webSocket path three logged in users") {
 //
 //    UserManager.loggedIn += "andy"

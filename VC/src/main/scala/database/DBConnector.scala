@@ -74,6 +74,7 @@ object DBConnector {
 
   def newContact(contact1: String, contact2: String, connection: Connection): Boolean = {
     val statement = connection.createStatement()
+    deletePending(contact1, contact2, connection)
     statement.executeUpdate(s"INSERT INTO CONTACTS VALUES('$contact1', '$contact2')") == 1
   }
 
@@ -90,6 +91,11 @@ object DBConnector {
       def hasNext = resultSet.next()
       def next() = resultSet.getString(1)
     }.toSet
+  }
+
+  def deletePending(requestor: String, requestee: String, connection: Connection): Boolean = {
+    val statement = connection.createStatement()
+    return statement.executeUpdate(s"DELETE FROM PENDING WHERE REQUESTOR = '$requestor' AND REQUESTEE = '$requestee'") == 1
   }
 }
 

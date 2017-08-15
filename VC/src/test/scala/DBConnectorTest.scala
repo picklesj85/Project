@@ -5,22 +5,22 @@ class DBConnectorTest extends FunSuite with BeforeAndAfterAll {
 
   val connection = DBConnector.connect
 
-  val DBUserCount = {
+  var DBUserCount = {
     val statement = connection.createStatement()
     val result = statement.executeQuery("SELECT COUNT(*) FROM USERS")
-    result.next()
+    if (result.next()) result.getInt(1) else Int.MinValue
   }
 
   val DBContactCount = {
     val statement = connection.createStatement()
     val result = statement.executeQuery("SELECT COUNT(*) FROM CONTACTS")
-    result.next()
+    if (result.next()) result.getInt(1) else Int.MinValue
   }
 
   val DBPendingCount = {
     val statement = connection.createStatement()
     val result = statement.executeQuery("SELECT COUNT(*) FROM PENDING")
-    result.next()
+    if (result.next()) result.getInt(1) else Int.MinValue
   }
 
   override def afterAll() = {
@@ -29,24 +29,26 @@ class DBConnectorTest extends FunSuite with BeforeAndAfterAll {
                                                "WHERE CONTACT1 = 'testContact1'" +
                                                "OR CONTACT2 = 'testContact1'")
 
-    connection.createStatement().executeUpdate("DELETE FROM PENDING WHERE REQUESTEE = 'testContact1'")
+    connection.createStatement().executeUpdate("DELETE FROM PENDING " +
+                                               "WHERE REQUESTEE = 'testContact1'" +
+                                               "OR REQUESTEE = 'testContact6'")
 
     val endUserSize = {
       val statement = connection.createStatement()
       val result = statement.executeQuery("SELECT COUNT(*) FROM USERS")
-      result.next()
+      if (result.next()) result.getInt(1) else Int.MinValue
     }
 
     val endContactCount = {
       val statement = connection.createStatement()
       val result = statement.executeQuery("SELECT COUNT(*) FROM CONTACTS")
-      result.next()
+      if (result.next()) result.getInt(1) else Int.MinValue
     }
 
     val endPendingCount = {
       val statement = connection.createStatement()
       val result = statement.executeQuery("SELECT COUNT(*) FROM PENDING")
-      result.next()
+      if (result.next()) result.getInt(1) else Int.MinValue
     }
 
     assert(DBUserCount == endUserSize) // make sure we haven't accidentally added to the database during testing
@@ -104,8 +106,18 @@ class DBConnectorTest extends FunSuite with BeforeAndAfterAll {
     assert(DBConnector.newContact("testContact5", "testContact1", connection))
   }
 
+  test("new contact deletes from pending") {
+    val statement = connection.createStatement()
+    assert(DBConnector.newPendingContact("testContact1", "testContact6", connection))
+    val result1 = statement.executeQuery("SELECT COUNT(REQUESTEE) FROM PENDING WHERE REQUESTEE = 'testContact6'")
+    if (result1.next()) assert(result1.getInt(1) == 1)
+    assert(DBConnector.newContact("testContact1", "testContact6", connection))
+    val result2 = statement.executeQuery("SELECT COUNT(REQUESTEE) FROM PENDING WHERE REQUESTEE = 'testContact6'")
+    if (result2.next()) assert(result2.getInt(1) == 0)
+  }
+
   test("get contacts") {
-    val contactSet = Set("testContact2", "testContact5", "testContact4", "testContact3")
+    val contactSet = Set("testContact2", "testContact5", "testContact4", "testContact3", "testContact6")
     assert(DBConnector.getMyContacts("testContact1", connection) == contactSet)
   }
 
@@ -119,6 +131,11 @@ class DBConnectorTest extends FunSuite with BeforeAndAfterAll {
   test("get pending contacts") {
     val contactSet = Set("testContact2", "testContact4", "testContact5", "testContact3")
     assert(DBConnector.getPendingContacts("testContact1", connection) == contactSet)
+  }
+
+  test("delete pending contacts") {
+    assert(DBConnector.newPendingContact("james", "mark", connection))
+    assert(DBConnector.deletePending("james", "mark", connection))
   }
 
   test("search contacts") {
