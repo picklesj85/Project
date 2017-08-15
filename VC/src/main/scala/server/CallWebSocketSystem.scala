@@ -7,6 +7,7 @@ import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import DefaultJsonProtocol._
 import scala.concurrent.duration._
+import server._
 
 
 
@@ -16,23 +17,6 @@ case class User(userName: String, actorRef: ActorRef)
 case class SendUser(tag: String, userName: String) // cannot use spray-json with User because of ActorRef
 case class RoomID(tag: String, roomID: Int, caller: Boolean)
 case class RoomError(tag: String)
-
-
-
-trait MyJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val sendUserFormat = jsonFormat2(SendUser)
-  implicit val roomIDFormat = jsonFormat3(RoomID)
-  implicit val roomErrorFormat = jsonFormat1(RoomError)
-  implicit val wrappedMessageFormat = jsonFormat1(WrappedMessage)
-  implicit val onlineContacts = jsonFormat2(OnlineContacts)
-  implicit val offlineContacts = jsonFormat2(OfflineContacts)
-  implicit val pendingContacts = jsonFormat2(PendingContacts)
-  implicit val roomNumber = jsonFormat2(RoomNumber)
-  implicit val receiveCall = jsonFormat3(ReceiveCall)
-  implicit val sendCall = jsonFormat2(SendCall)
-  implicit val accepted = jsonFormat1(Accepted)
-  implicit val rejected = jsonFormat1(Rejected)
-}
 
 
 case class Room(roomID: Int, actorSystem: ActorSystem) {

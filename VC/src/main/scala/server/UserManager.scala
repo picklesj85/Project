@@ -1,14 +1,15 @@
 package server
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import database.DBConnector
 import spray.json._
-
+import DefaultJsonProtocol._
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 
-class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonProtocol {
+class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonProtocol  {
 
   import context._
 
@@ -60,9 +61,13 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
 
       case "onCall" => UserManager.onCall += userName
 
-      // case searchContacts
-      // case respond (e.g. respondAccept or respondDecline) write to DB and updateContacts
+      case search if search.take(6) == "search" =>
+        val connection = DBConnector.connect
+        val searchResults: Set[String] = DBConnector.searchContacts(search.drop(6), connection)
+        thisUser ! WrappedMessage(Results("search", searchResults).toJson.prettyPrint)
 
+      // case respond (e.g. respondAccept or respondDecline) write to DB and updateContacts
+      // case request
     }
 
     case Poll =>
@@ -111,6 +116,7 @@ object UserManager {
 
 }
 
+
 case class OnlineContacts(tag: String, onlineContacts: Set[String])
 case class OfflineContacts(tag: String, offlineContacts: Set[String])
 case class PendingContacts(tag: String, pendingContacts: Set[String])
@@ -120,5 +126,6 @@ case class Rejected(tag: String)
 case class SendCall(tag: String, room: Int)
 case object Poll
 case class RoomNumber(tag: String, number: Int)
+case class Results(tag: String, results: Set[String])
 
 

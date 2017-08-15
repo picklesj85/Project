@@ -192,6 +192,17 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       client.expectMsg(WrappedMessage(Rejected("rejected").toJson.prettyPrint))
     }
 
+    "will send search results back" in {
+      user ! WrappedMessage("searchjames")
+      client.expectMsg(WrappedMessage(Results("search", Set("james")).toJson.prettyPrint))
+    }
+
+    "will send multiple search results back" in {
+      user2 ! WrappedMessage("searchtes")
+      val searchSet = Set("test1", "test2", "test3")
+      client2.expectMsg(WrappedMessage(Results("search", searchSet).toJson.prettyPrint))
+    }
+
     "checking a third user" in {
       UserManager.loggedIn += "test3"
       UserManager.loggedIn += "pete"
@@ -219,8 +230,6 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       client3.expectMsg(WrappedMessage(OnlineContacts("online", onlineSet).toJson.prettyPrint))
       client3.expectMsg(WrappedMessage(OfflineContacts("offline", offlineSet).toJson.prettyPrint))
     }
-
-
 
     "when user logs out remove the user from online users and logged in" in {
       UserManager.loggedIn = Set("test1", "test2")
