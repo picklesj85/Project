@@ -96,8 +96,8 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
     "add the new user to the onlineUsers map" in {
       UserManager.loggedIn += "test1"
-      user ! User("test1", client.ref)
       UserManager.loggedIn += "james"
+      user ! User("test1", client.ref)
       assert(UserManager.onlineUsers.contains("test1"))
       assert(UserManager.onlineUsers("test1") == client.ref)
     }
@@ -105,7 +105,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
     "send the client all contacts" in {
       client.expectMsg(WrappedMessage(OnlineContacts("online", Set("james")).toJson.prettyPrint))
       client.expectMsg(WrappedMessage(OfflineContacts("offline", Set("sarah")).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(PendingContacts("online", Set()).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(PendingContacts("pending", Set()).toJson.prettyPrint))
     }
 
     "start the poll loop after 3 seconds" in {
@@ -193,11 +193,11 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
     "checking a third user" in {
       UserManager.loggedIn += "test1"
-      user3 ! User("test3", client.ref)
       UserManager.loggedIn += "pete"
       UserManager.loggedIn += "tim"
       UserManager.loggedIn += "fay"
-      assert(UserManager.onlineUsers.contains("test13"))
+      user3 ! User("test3", client.ref)
+      assert(UserManager.onlineUsers.contains("test3"))
       assert(UserManager.onlineUsers("test3") == client.ref)
     }
 

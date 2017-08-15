@@ -313,66 +313,66 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(!OpenRooms.openRooms.contains(2))
     }
   }
-
-  test("test the loggedIn webSocket path one logged in user") {
-
-    UserManager.loggedIn += "James"
-
-    WS("/loggedIn?user=James", wsClient1.flow) ~> ws ~> check {
-
-      isWebSocketUpgrade shouldEqual true
-
-      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      assert(UserManager.onlineUsers.size == 1)
-      assert(UserManager.onlineUsers.head._1 == "James")
-
-      Thread.sleep(3000)
-      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-    }
-  }
-
-  test("test the loggedIn webSocket path two logged in users") {
-
-    UserManager.loggedIn += "Sarah"
-
-    WS("/loggedIn?user=Sarah", wsClient2.flow) ~> ws ~> check {
-
-      isWebSocketUpgrade shouldEqual true
-
-      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      assert(UserManager.onlineUsers.size == 2)
-      assert(UserManager.onlineUsers.contains("Sarah"))
-
-      Thread.sleep(3000)
-      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-    }
-  }
-
-  test("test the loggedIn webSocket path three logged in users") {
-
-    UserManager.loggedIn += "andy"
-
-    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
-
-      isWebSocketUpgrade shouldEqual true
-
-      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-      assert(UserManager.onlineUsers.size == 3)
-      assert(UserManager.onlineUsers.contains("andy"))
-
-      Thread.sleep(3000)
-      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-
-    }
-  }
+//
+//  test("test the loggedIn webSocket path one logged in user") {
+//
+//    UserManager.loggedIn += "James"
+//
+//    WS("/loggedIn?user=James", wsClient1.flow) ~> ws ~> check {
+//
+//      isWebSocketUpgrade shouldEqual true
+//
+//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//      assert(UserManager.onlineUsers.size == 1)
+//      assert(UserManager.onlineUsers.head._1 == "James")
+//
+//      Thread.sleep(3000)
+//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//    }
+//  }
+//
+//  test("test the loggedIn webSocket path two logged in users") {
+//
+//    UserManager.loggedIn += "Sarah"
+//
+//    WS("/loggedIn?user=Sarah", wsClient2.flow) ~> ws ~> check {
+//
+//      isWebSocketUpgrade shouldEqual true
+//
+//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//      assert(UserManager.onlineUsers.size == 2)
+//      assert(UserManager.onlineUsers.contains("Sarah"))
+//
+//      Thread.sleep(3000)
+//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//    }
+//  }
+//
+//  test("test the loggedIn webSocket path three logged in users") {
+//
+//    UserManager.loggedIn += "andy"
+//
+//    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
+//
+//      isWebSocketUpgrade shouldEqual true
+//
+//      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//      assert(UserManager.onlineUsers.size == 3)
+//      assert(UserManager.onlineUsers.contains("andy"))
+//
+//      Thread.sleep(3000)
+//      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
+//
+//    }
+//  }
 
   test("test the loggedIn webSocket with a logout") {
 
