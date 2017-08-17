@@ -24,8 +24,17 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
   override def beforeAll { // write test entry to database
     DBConnector.createUser("testUser", "testPassword", connection)
+    // testContact1
     DBConnector.newPendingContact("test", "testUser", connection)
     DBConnector.newContact("anotherTest", "testUser", connection)
+    //testContact2
+    DBConnector.newPendingContact("dave", "testUser2", connection)
+    DBConnector.newPendingContact("sarah", "testUser2", connection)
+    DBConnector.newContact("james", "testUser2", connection)
+    DBConnector.newContact("testUser2", "alice", connection)
+    // test contact3
+    DBConnector.newContact("james", "testUser3", connection)
+    DBConnector.newContact("sarah", "testUser3", connection)
   }
 
   override def afterAll: Unit = { // delete test entry
@@ -339,67 +348,74 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
     }
   }
 
-//  test("test the loggedIn webSocket path two logged in users") {
-//
-//    UserManager.loggedIn += "Sarah"
-//
-//    WS("/loggedIn?user=Sarah", wsClient2.flow) ~> ws ~> check {
-//
-//      isWebSocketUpgrade shouldEqual true
-//
-//      wsClient2.expectMessage(PendingContacts("pending", Set()).toJson.prettyPrint)
-//      wsClient2.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
-//      wsClient2.expectMessage(OfflineContacts("offline", Set()).toJson.prettyPrint)
-//
-//      assert(UserManager.onlineUsers.size == 2)
-//      assert(UserManager.onlineUsers.contains("Sarah"))
-//
-//      Thread.sleep(3000)
-//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//
-//    }
-//  }
+  test("test the loggedIn webSocket path two logged in users") {
 
-//  test("test the loggedIn webSocket path three logged in users") {
-//
-//    UserManager.loggedIn += "andy"
-//
-//    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
-//
-//      isWebSocketUpgrade shouldEqual true
-//
-//      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//
-//      assert(UserManager.onlineUsers.size == 3)
-//      assert(UserManager.onlineUsers.contains("andy"))
-//
-//      Thread.sleep(3000)
-//      wsClient3.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//      wsClient1.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//      wsClient2.expectMessage(AllOnlineUsers("onlineUsers", UserManager.loggedIn).toJson.prettyPrint)
-//
-//    }
-//  }
+    UserManager.loggedIn += "testContact2"
+
+    WS("/loggedIn?user=testContact2", wsClient2.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient2.expectMessage(PendingContacts("pending", Set("dave", "sarah")).toJson.prettyPrint)
+      wsClient2.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+      wsClient2.expectMessage(OfflineContacts("offline", Set("james", "alice")).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 2)
+      assert(UserManager.onlineUsers.contains("testContact2"))
+
+      Thread.sleep(3000)
+      wsClient2.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+      wsClient2.expectMessage(OfflineContacts("offline", Set("james", "alice")).toJson.prettyPrint)
+
+    }
+  }
+
+  test("test the loggedIn webSocket path three logged in users") {
+
+    UserManager.loggedIn += "testContact3"
+    UserManager.onlineUsers += "james"
+    UserManager.onlineUsers += "sarah"
+
+    WS("/loggedIn?user=testContact3", wsClient3.flow) ~> ws ~> check {
+
+      isWebSocketUpgrade shouldEqual true
+
+      wsClient2.expectMessage(PendingContacts("pending", Set()).toJson.prettyPrint)
+      wsClient2.expectMessage(OnlineContacts("online", Set("james", "sarah")).toJson.prettyPrint)
+      wsClient2.expectMessage(OfflineContacts("offline", Set()).toJson.prettyPrint)
+
+      assert(UserManager.onlineUsers.size == 5)
+      assert(UserManager.onlineUsers.contains("testContact3"))
+
+      UserManager.onlineUsers -= "james"
+      UserManager.onlineUsers -= "sarah"
+
+      Thread.sleep(3000)
+      wsClient2.expectMessage(PendingContacts("pending", Set()).toJson.prettyPrint)
+      wsClient2.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
+      wsClient2.expectMessage(OfflineContacts("offline", Set("james", "sarah")).toJson.prettyPrint)
+
+    }
+  }
 
   test("test the loggedIn webSocket with a logout") {
 
-    WS("/loggedIn?user=andy", wsClient3.flow) ~> ws ~> check {
+    WS("/loggedIn?user=testContact3", wsClient3.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
       assert(UserManager.onlineUsers.size == 3)
-      assert(UserManager.onlineUsers.contains("andy"))
+      assert(UserManager.onlineUsers.contains("testContact3"))
 
       wsClient3.sendMessage("logout")
       Thread.sleep(200)
       assert(UserManager.onlineUsers.size == 2)
-      assert(!UserManager.onlineUsers.contains("andy"))
+      assert(!UserManager.onlineUsers.contains("testContact3"))
 
       wsClient2.sendMessage("logout")
       Thread.sleep(200)
       assert(UserManager.onlineUsers.size == 1)
-      assert(!UserManager.onlineUsers.contains("Sarah"))
+      assert(!UserManager.onlineUsers.contains("testContact2"))
 
       wsClient1.sendMessage("logout")
       Thread.sleep(200)
