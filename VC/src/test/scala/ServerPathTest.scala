@@ -9,6 +9,7 @@ import akka.stream.ActorMaterializer
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.Location
+import akka.testkit.TestProbe
 
 import scala.io.Source
 import akka.util.ByteString
@@ -56,6 +57,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   val wsClient1 = WSProbe()
   val wsClient2 = WSProbe()
   val wsClient3 = WSProbe()
+  val dummy1 = TestProbe()
+  val dummy2 = TestProbe()
 
 
   // not needed for now as currently creating new rooms for every webSocket
@@ -373,8 +376,8 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
   test("test the loggedIn webSocket path three logged in users") {
 
     UserManager.loggedIn += "testContact3"
-    UserManager.onlineUsers += "james"
-    UserManager.onlineUsers += "sarah"
+    UserManager.onlineUsers += "james" -> dummy1.ref
+    UserManager.onlineUsers += "sarah" -> dummy2.ref
 
     WS("/loggedIn?user=testContact3", wsClient3.flow) ~> ws ~> check {
 
