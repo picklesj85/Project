@@ -3,6 +3,9 @@ var user;
 var serverAddress = "192.168.0.21:8080";
 var webSocket;
 var room;
+var online;
+var offline;
+var pending;
 
 function loadFunction() {
     let params = (new URL(document.location)).searchParams;
@@ -34,7 +37,7 @@ function startWebSocket() {
         switch(msg.tag) {
 
             case "online":
-                var online = msg.onlineContacts; // this is the list of contacts from server that are online
+                online = msg.onlineContacts; // this is the list of contacts from server that are online
                 var onlineList = "";
                 for (var i = 0; i < online.length; i++) {
                     if (online[i] !== user) { // do not want to display our own name
@@ -45,7 +48,7 @@ function startWebSocket() {
                 break;
 
             case "offline":
-                var offline = msg.offlineContacts; // this is the list of contacts from server that are offline
+                offline = msg.offlineContacts; // this is the list of contacts from server that are offline
                 var offlineList = "";
                 for (i = 0; i < offline.length; i++) {
                     if (offline[i] !== user) { // do not want to display our own name
@@ -56,7 +59,7 @@ function startWebSocket() {
                 break;
 
             case "pending":
-                var pending = msg.pendingContacts; // this is the list of contact requests
+                pending = msg.pendingContacts; // this is the list of contact requests
                 var pendingList = "";
                 for ( i = 0; i < pending.length; i++) {
                     if (pending[i] !== user) { // do not want to display our own name
@@ -95,11 +98,17 @@ function startWebSocket() {
             case "rejected":
                 alert("The far end has rejected your call.");
                 window.location.reload();
+                break;
 
-            // case onlineContacts
-            // case offlineContacts
-            // case pendingContacts
-            // case searchContacts
+            case "search":
+                var results = msg.results;
+                var resultsList = "";
+                for (i = 0; i < results.length; i++) {
+                    if (results[i] !== user) { // do not want to display our own name
+                        resultsList += "<li onclick='request(this.innerHTML)'>" + results[i] + "</li>";
+                    }
+                }
+                document.getElementById("searchResults").innerHTML = resultsList; // display the list
         }
     };
 
@@ -118,8 +127,25 @@ function respond(contact) {
     }
 }
 
-function searchContacts(){
+function searchContacts(searchText){
+    msgServer("search" + searchText);
+}
 
+function request(contact) {
+    if (online.indexOf(contact) === -1 && offline.indexOf(contact) === -1) { // true if not already one of your contacts
+        for (var i = 0; i < pending.length; i++) {
+            if (pending[i] === contact) { // already sent a request
+                alert("Contact request already sent to " + contact);
+                return;
+            }
+        }
+        if (confirm("Send contact request to " + contact + "?")) {
+            msgServer("request" + contact);
+            alert("Contact request sent to " + contact);
+        }
+    } else {
+        alert("You already have " + contact + " as a contact.");
+    }
 }
 
 function call(onlineUser) {
