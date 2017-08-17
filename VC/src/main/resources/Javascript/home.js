@@ -33,15 +33,37 @@ function startWebSocket() {
 
         switch(msg.tag) {
 
-            case "onlineUsers":
-                var onlineUsers = msg.onlineUsers; // this is the list of usernames from server that are online
-                var userList = "";
-                for (var i = 0; i < onlineUsers.length; i++) {
-                    if (onlineUsers[i] !== user) { // do not want to display our own name
-                        userList += "<li onclick='call(this.innerHTML)'>" + onlineUsers[i] + "</li>";
+            case "online":
+                var online = msg.onlineContacts; // this is the list of contacts from server that are online
+                var onlineList = "";
+                for (var i = 0; i < online.length; i++) {
+                    if (online[i] !== user) { // do not want to display our own name
+                        onlineList += "<li onclick='call(this.innerHTML)'>" + online[i] + "</li>";
                     }
                 }
-                document.getElementById("onlineUsers").innerHTML = userList; // display the list
+                document.getElementById("online").innerHTML = onlineList; // display the list
+                break;
+
+            case "offline":
+                var offline = msg.offlineContacts; // this is the list of contacts from server that are offline
+                var offlineList = "";
+                for (i = 0; i < offline.length; i++) {
+                    if (offline[i] !== user) { // do not want to display our own name
+                        offlineList += "<li>" + offline[i] + "</li>";
+                    }
+                }
+                document.getElementById("offline").innerHTML = offlineList; // display the list
+                break;
+
+            case "pending":
+                var pending = msg.pendingContacts; // this is the list of contact requests
+                var pendingList = "";
+                for ( i = 0; i < pending.length; i++) {
+                    if (pending[i] !== user) { // do not want to display our own name
+                        pendingList += "<li onclick='respond(this.innerHTML)'>" + pending[i] + "</li>";
+                    }
+                }
+                document.getElementById("pending").innerHTML = pendingList; // display the list
                 break;
 
             case "roomNumber":
@@ -88,12 +110,12 @@ function startWebSocket() {
 
 }
 
-function declineContact(contact) {
-    // message server eg "declineJames"
-}
-
-function acceptContact(contact) {
-    // message server eg "acceptJames"
+function respond(contact) {
+    if (confirm("Accept contact request from " + contact + "? \n\nClick OK to confirm or Cancel to reject.")) {
+        msgServer("respondaccept" + contact);
+    } else {
+        msgServer("respondreject" + contact);
+    }
 }
 
 function searchContacts(){
