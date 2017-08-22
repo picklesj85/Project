@@ -32,6 +32,8 @@
 
     <p id="callTxt"></p>
     <div id="calling"></div>
+
+
     <div>
         <div class="left">
             <h3 class="heading">Contact Requests</h3>
@@ -41,6 +43,13 @@
         <div class="middle">
             <h2 class="heading">Online Contacts</h2>
             <ul id="online" class="online"></ul>
+            <br>
+            <div>
+                <h3 class="heading">Search for new contacts: </h3>
+                <input type="text" id="search">
+                <input type="submit" value="Search" onclick="searchContacts(search.value)">
+                <ul id="searchResults" class="online"></ul>
+            </div>
         </div>
 
         <div class="right">
@@ -48,14 +57,10 @@
             <ul id="offline" class="offline"></ul>
         </div>
 
+
+
     </div>
-    <div></div>
-    <div class="middle">
-        <h3 class="heading">Search for new contacts: </h3>
-        <input type="text" id="search">
-        <input type="submit" value="Search" onclick="searchContacts(search.value)">
-        <ul id="searchResults" class="online"></ul>
-    </div>
+
 
 
 
