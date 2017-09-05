@@ -13,24 +13,23 @@
 
 
 </head>
-<body onload="getMedia()">
-<div class="center">
+<body class="center" onload="getMedia()">
+<div>
 
     <h1 class="heading" id="room"></h1>
-    <h3 class="attendees" id="attendees"></h3>
-    <ul class="attendeeList" id="attendeeList"></ul>
-
-    <video id="remoteVideoFeed" width="320" height="240" autoplay></video>
+    <p class="heading" id="remoteUsername"></p><p id="loadText" class="loading">Connecting...</p>
+    <video id="remoteVideoFeed" class="calling" width="320" height="240" autoplay></video>
+    <p class="heading" id="localUsername"></p>
     <video id ="localVideoFeed" width="160" height="120" autoplay></video>
 
     <div>
         <p id="start"></p>
-        <button id="endCall" onclick="endCall()">End Call</button>
+        <button class="button" id="endCall" onclick="endCall()">End Call</button>
         <br>
         <br>
         <textarea class="messages" id="chatMessage"></textarea>
     </div>
-    <button class="messages" id="send">Send</button>
+    <button class="button" class="messages" id="send">Send</button>
     <div class="chatArea"><ul class="messages" id="messages"></ul></div>
 </div>
 </body>

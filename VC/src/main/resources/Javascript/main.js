@@ -1,6 +1,6 @@
 "use strict";
 
-var IPAddress = "10.186.143.183:8080";
+var IPAddress = "192.168.0.21:8080";
 var userName;
 var roomID;
 var wsURL;
@@ -29,7 +29,7 @@ function getMedia() {
         var localVideoFeed = document.getElementById('localVideoFeed');
         localVideoFeed.muted = true; // mute this otherwise feedback
         localVideoFeed.srcObject = localMediaStream; // display local video feed
-        myMediaStream = localMediaStream // assign to global for reconnection if failure
+        myMediaStream = localMediaStream; // assign to global for reconnection if failure
         
         localVideoFeed.onloadedmetadata = function () {
             prepareWebSocket();
@@ -46,6 +46,7 @@ function prepareWebSocket() {
     let params = (new URL(document.location)).searchParams;
     userName = params.get("userName");
     roomID = params.get("roomID");
+    document.getElementById("localUsername").innerHTML = userName;
 
     console.log("User: " + userName + "\nRoom: " + roomID);
 
@@ -171,8 +172,7 @@ function startWebSocket() {
         $send = $("#send"),
         $messages = $("#messages"),
         $room = $("#room"),
-        $attendees = $("#attendees"),
-        $attendeeList = $("#attendeeList"),
+        $loading = $("#loading"),
         $title = $("#title");
 
     webSocketConnection = new WebSocket(wsURL);
@@ -228,10 +228,8 @@ function startWebSocket() {
                         startNegotiating();
                     }
                 }
-                if (attendees.indexOf(msg.userName) === -1) { // user not added to list of attendees yet
-                    attendees.push(msg.userName);
-                    $attendees.html("Attendees:");
-                    $attendeeList.append($("<li>" + msg.userName + "</li>"));
+                if (msg.userName !== userName) {
+                    document.getElementById("remoteUsername").innerHTML = msg.userName;
                 }
                 break;
 
@@ -310,6 +308,7 @@ function newPeerConnection() {
             (localPC.signalingState === "stable" && !answerFailed)) {
             webSocketConnection.send("connected");
             console.log("connected");
+
         }
     }
 }
@@ -350,8 +349,9 @@ function newICECandidateMessage(msg) {
 }
 
 function handleTrackEvent(event) {
-
     var remoteVideoFeed = document.getElementById('remoteVideoFeed');
+    remoteVideoFeed.removeAttribute("class");
+    $("#loadText").remove();
     remoteVideoFeed.srcObject = event.streams[0];
 }
 

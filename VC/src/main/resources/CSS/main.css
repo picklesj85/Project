@@ -1,44 +1,59 @@
 .heading {
-    font-family: Calibri;
-    font-style: oblique;
-    font-weight: bold;
-    color: darkblue;
+    font-family: sans-serif;
+    font-style: normal;
+    font-weight: normal;
+    color: whitesmoke;
+}
+
+.underlinedHeading {
+    font-family: sans-serif;
+    text-decoration: underline;
+    font-style: normal;
+    font-weight: normal;
+    color: whitesmoke;
+}
+
+.loading {
+    font-family: sans-serif;
+    font-style: italic;
+    font-weight: normal;
+    color: #3B78E7;
 }
 
 .error {
-    font-family: Calibri;
-    font-style: oblique;
+    font-family: sans-serif;
+    font-style: normal;
     font-weight: normal;
     color: red;
 }
 
 .roomNumber {
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: bold;
-    color: black;
+    color: whitesmoke;
 }
 
 .center {
     margin: auto;
-    width: 75%;
-    border: 5px solid black;
-    padding: 50px;
+    height: 100%;
+    width: 100%;
     text-align: center;
+    background: #232526;
 }
 
 .attendees {
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: normal;
-    color: black;
+    color: whitesmoke;
 }
 
 .attendeeList {
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: italic;
     font-weight: normal;
-    color: black;
+    color: whitesmoke;
     list-style-type: none;
 }
 
@@ -49,7 +64,7 @@
 
 .online {
     list-style-type: none;
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: normal;
     color: #3498db;
@@ -60,7 +75,7 @@
     cursor: pointer;
     cursor: hand;
     list-style-type: none;
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: normal;
     color: red;
@@ -69,18 +84,18 @@
 
 .offline {
     list-style-type: none;
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: bold;
-    color: black;
+    color: whitesmoke;
 }
 
 
 .user {
-    font-family: Calibri;
+    font-family: sans-serif;
     font-style: normal;
     font-weight: bold;
-    color: black;
+    color: whitesmoke;
 }
 
 .calling {
@@ -110,4 +125,26 @@
 .right {
     float:right;
     width:30%;
+}
+
+.notRegistered {
+    color: whitesmoke;
+}
+
+.button {
+    -webkit-transition-duration: 0.4s;
+    border: none;
+    padding: 4px 16px;
+    color: #232526;
+    background-color: #4285F4;
+    border-radius: 4px;
+}
+
+.button:hover {
+    background-color: #3B78E7;
+    color: whitesmoke;
+}
+
+.blue {
+    color: #3B78E7;
 }

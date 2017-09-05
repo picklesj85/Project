@@ -15,45 +15,45 @@
     <div>
         <h1 class="user" id="user"></h1>
 
-        <input id="logout" type="button" value="Logout" onclick="logout()">
+        <input class="button" id="logout" type="button" value="Logout" onclick="logout()">
 
     </div>
 
-    <h3 class="heading">Please enter the room you would like to join. If you do not have a Room please create one.</h3>
+    <h3 class="heading">To start a call enter a room number</h3>
 
-    <input type="button" value="Create Room" onclick="createRoom()"><br>
+    <input class="button" type="button" value="Create Room" onclick="createRoom()"><br>
 
     <form action="room.html" method="get" onclick="onCall()">
-        Room number:<br>
-        <input type="text" name="roomID"><br>
+        <br>
+        <input type="text" placeholder="room number" name="roomID" required><br>
         <input type="hidden" name="userName" id="userName"><br>
-        <input type="submit" value="Join">
+        <input class="button" type="submit" value="Join">
     </form>
 
-    <p id="callTxt"></p>
+    <p class="loading" id="callTxt"></p>
     <div id="calling"></div>
 
 
     <div>
         <div class="left">
-            <h3 class="heading">Contact Requests</h3>
+            <h3 class="underlinedHeading">Contact Requests</h3>
             <p id="pending" class="online"></p>
         </div>
 
         <div class="middle">
-            <h2 class="heading">Online Contacts</h2>
+            <h2 class="underlinedHeading">Online Contacts</h2>
             <ul id="online" class="online"></ul>
             <br>
             <div>
                 <h3 class="heading">Search for new contacts: </h3>
                 <input type="text" id="search">
-                <input type="submit" value="Search" onclick="searchContacts(search.value)">
+                <input class="button" type="submit" value="Search" onclick="searchContacts(search.value)">
                 <ul id="searchResults" class="online"></ul>
             </div>
         </div>
 
         <div class="right">
-            <h3 class="heading">Offline Contacts</h3>
+            <h3 class="underlinedHeading">Offline Contacts</h3>
             <ul id="offline" class="offline"></ul>
         </div>
 

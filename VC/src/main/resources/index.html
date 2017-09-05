@@ -18,17 +18,17 @@
 </head>
 <body class="center">
 
-    <h1 class="heading">Please enter the room you would like to join. If you do not have a Room please create one.</h1>
+    <h1 class="heading">To start a call enter a room number</h1>
     <br><br>
-    <input type="button" value="Create Room" onclick="createRoom()">
+    <input class="button" type="button" value="Create Room" onclick="createRoom()">
 
     <form action="room.html" method="get">
-        Room number:<br>
-        <input type="text" name="roomID"><br>
-        Name:<br>
-        <input type="text" name="userName"><br>
         <br>
-        <input type="submit" value="Join">
+        <input type="text" name="roomID" placeholder="room number" required><br>
+        <br>
+        <input type="text" name="userName" placeholder="name" required><br>
+        <br>
+        <input class="button" type="submit" value="Join">
     </form>
 
     <div>
@@ -36,8 +36,8 @@
         <form class="loginForm" action="/credentials" method="post">
             <input type="text" name="username" placeholder="username" required>
             <input type="password" name="password" placeholder="password" required>
-            <input type="submit" value="Login">
-            <p>Not registered? <a href="createAccount">Create an account</a> </p>
+            <input class="button" type="submit" value="Login">
+            <p class="notRegistered">Not registered? <a class="blue" href="createAccount">Create an account</a> </p>
         </form>
     </div>
 
