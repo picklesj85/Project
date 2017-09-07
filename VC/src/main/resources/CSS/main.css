@@ -60,6 +60,7 @@
 .messages {
     text-align: left;
     list-style-type: none;
+    color: whitesmoke;
 }
 
 .online {
@@ -148,3 +149,4 @@
 .blue {
     color: #3B78E7;
 }
+

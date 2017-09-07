@@ -202,7 +202,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
 
   test("test the webSocket path for user joining room") {
-    WS("/webSocket/1?name=Alice", wsClient1Room1.flow) ~> ws ~> check {
+    WS("/webSocket/1?name=Sarah", wsClient1Room1.flow) ~> ws ~> check {
 
       isWebSocketUpgrade shouldEqual true
 
@@ -224,7 +224,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
 
       isWebSocketUpgrade shouldEqual true
 
-      wsClient2Room1.expectMessage(SendUser("user", "Alice").toJson.prettyPrint)
+      wsClient2Room1.expectMessage(SendUser("user", "Sarah").toJson.prettyPrint)
 
       wsClient2Room1.expectMessage(RoomID("roomID", 1, false).toJson.prettyPrint) // false as 2nd user so not the caller
       wsClient1Room1.expectNoMessage(100.millis)

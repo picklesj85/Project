@@ -70,7 +70,7 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
 
 object OpenRooms {
 
-  var IDcount = 0
+  var IDcount = 1000
 
   var openRooms: Map[Int, Room] = Map.empty[Int, Room]
 
