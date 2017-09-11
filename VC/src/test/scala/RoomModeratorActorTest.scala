@@ -15,7 +15,7 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
   }
 
   // create a test room moderator
-  val moderator = TestActorRef(new RoomModerator(OpenRooms.createRoom()))
+  val moderator = TestActorRef(new RoomModerator(Room(1, system)))
 
 
   // create some test clients
@@ -90,7 +90,6 @@ class RoomModeratorActorTest extends TestKit(ActorSystem("WebSocketSystemTest"))
     }
 
     "when receives a hang up must Kill each member of the room" in {
-      assert(OpenRooms.openRooms.size == 1)
 
       moderator ! WrappedMessage(hangUp)
 

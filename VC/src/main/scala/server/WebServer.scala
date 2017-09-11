@@ -28,6 +28,7 @@ object WebServer extends HttpApp {
   def createAccount = getFromResource("createAccount.html")
   def userExists = getFromResource("usernameExists.html")
   def homeJs = getFromResource("Javascript/home.js")
+  def ring = getFromResource("telephone-ring-03a.mp3")
 
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
@@ -47,7 +48,7 @@ object WebServer extends HttpApp {
         formFields('username, 'password) { (username, password) =>
           val connection = DBConnector.connect
           if (DBConnector.authenticate(username, password, connection)) {
-            UserManager.login(username)
+            UserManager.login(username.toLowerCase())
             connection.close()
             redirect("home?user=" + username, StatusCodes.SeeOther)
           } else {
@@ -59,7 +60,7 @@ object WebServer extends HttpApp {
     } ~
     pathPrefix("home") {
       parameter('user) { user =>
-        if (UserManager.loggedIn.contains(user)) // user has validated credentials
+        if (UserManager.loggedIn.contains(user.toLowerCase())) // user has validated credentials
           get {
             home
           }
@@ -127,6 +128,11 @@ object WebServer extends HttpApp {
         homeJs
       }
     } ~
+    path("ring") {
+      get {
+        ring
+      }
+    } ~
     pathPrefix("webSocket" / IntNumber) {
       roomID =>
         parameter('name) { user =>
@@ -142,12 +148,10 @@ object WebServer extends HttpApp {
 
   def webSocketHandler(num: Int, name: String): Flow[Message, Message, Any] = {
 
-    OpenRooms.createRoom() // here for testing so I don't need to constantly create one.
-
     val room = OpenRooms.findRoom(num)
     val moderator = room.roomModerator
 
-    val sink = Sink.actorRef[WrappedMessage](moderator, PoisonPill) // is PoisonPill best option here?
+    val sink = Sink.actorRef[WrappedMessage](moderator, PoisonPill)
 
     def incoming: Sink[Message, _] = {
       Flow[Message].collect {
@@ -199,8 +203,7 @@ object WebServer extends HttpApp {
   }
 
   def main(args: Array[String]): Unit = {
-    WebServer.startServer("172.20.10.3", 8080)
-    OpenRooms.createRoom() // here for testing so I don't need to constantly create one
+    WebServer.startServer("192.168.0.21", 8080)
     system.terminate()
   }
 

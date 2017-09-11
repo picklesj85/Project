@@ -1,13 +1,12 @@
-"use strict";
 
-var IPAddress = "172.20.10.3:8080";
+
+var IPAddress = "192.168.0.21:8080";
 var userName;
 var roomID;
 var wsURL;
 var webSocketConnection = null;
 
-
-var localPC = null; // change name?
+var localPC = null;
 var SDPOffer = null;
 var SDPAnswer = null;
 var caller;
@@ -17,8 +16,6 @@ var offerFailed = true;
 var answerFailed = true;
 var gotOffer = false;
 var gotAnswer = false;
-
-var attendees = [];
 
 var constraints = {video: true, audio: true};
 
@@ -35,7 +32,6 @@ function getMedia() {
             prepareWebSocket();
         }
     }).catch(function (err) {
-        alert(err.name + ": " + err.message + "\n\n in startCall() getUserMedia()");
         console.log(err);
     });
 
@@ -74,7 +70,6 @@ function startNegotiating() {
         console.log("Sending Offer");
         msgServer(SDPOffer);
     }).catch(function (err) {
-        alert(err.name + ": " + err.message + "\n\n in startNegotiating()");
         console.log(err);
     });
 
@@ -123,7 +118,7 @@ function receivedOffer(offer) {
         console.log("Sending Answer");
         msgServer(SDPAnswer);
     }).catch(function (err) {
-        alert(err.name + ": " + err.message + "\n\n in receivedOffer()");
+        console.log(err);
     });
 
     setTimeout(function () { // timeout function for when sending the answer has failed
@@ -155,12 +150,10 @@ function receivedAnswer(answer) {
         return; // already connected
     }
     console.log("Received Answer");
-    //alert("received answer");
 
     var remoteDesc = new RTCSessionDescription(answer.sdp);
 
     localPC.setRemoteDescription(remoteDesc).catch(function (err) {
-        alert(err.name + ": " + err.message + "\n\n in receivedAnswer()");
         console.log(err);
     });
 
@@ -172,7 +165,6 @@ function startWebSocket() {
         $send = $("#send"),
         $messages = $("#messages"),
         $room = $("#room"),
-        $loading = $("#loading"),
         $title = $("#title");
 
     webSocketConnection = new WebSocket(wsURL);
@@ -187,7 +179,7 @@ function startWebSocket() {
             var msg = {
                 tag: "chat-message",
                 user: userName,
-                msg: userName + ": " + $chatMessage.val()
+                msg: $chatMessage.val()
             };
             $chatMessage.val("");
             msgServer(msg);
@@ -196,12 +188,6 @@ function startWebSocket() {
 
     webSocketConnection.onerror = function (error) {
         console.log("WebSocket error " + error.toString());
-        console.log(error);
-        // if (caller && offerFailed)
-        // webSocketConnection.close();
-        // offerFailed = true;
-        // answerFailed = true;
-        // prepareWebSocket();
     };
 
     webSocketConnection.onmessage = function (evt) {
@@ -221,10 +207,6 @@ function startWebSocket() {
             case "user":
                 if (msg.userName !== userName) {
                     if (caller && offerFailed) {
-                        // if (!offerFailed) { // the other side has a connection issue so need to start over.
-                        //     localPC.close();
-                        //     newPeerConnection();
-                        // }
                         startNegotiating();
                     }
                 }
@@ -254,7 +236,9 @@ function startWebSocket() {
                 break;
 
             case "chat-message":
-                $messages.prepend($("<li>" + msg.msg + "</li>"));
+                if (msg.msg.toString().length > 0) {
+                    $messages.prepend($("<li>" + msg.user + ": " + msg.msg + "</li>"));
+                }
                 break;
 
             case "hangUp":
@@ -275,7 +259,7 @@ function msgServer (message) {
     try {
         var jsonMsg = JSON.stringify(message);
     } catch (err) {
-        alert(err.name + ": " + err.message)
+        console.log(err);
     }
 
     console.log("To server: " + jsonMsg);
@@ -297,12 +281,6 @@ function newPeerConnection() {
 
     localPC.onicecandidate = handleICECandidateEvent;
     localPC.ontrack = handleTrackEvent;
-    // localPC.oniceconnectionstatechange = function () {
-    //     if (localPC.iceConnectionState === "failed" ||
-    //         localPC.iceConnectionState === "closed") {
-    //         iceFailed();
-    //     }
-    // }
     localPC.onsignalingstatechange = function () {
         if ((localPC.signalingState === "stable" && !offerFailed) ||
             (localPC.signalingState === "stable" && !answerFailed)) {
@@ -313,14 +291,6 @@ function newPeerConnection() {
     }
 }
 
-function iceFailed() {
-    localPC.close();
-    webSocketConnection.close();
-    offerFailed = true;
-    answerFailed = true;
-   // newPeerConnection();
-    prepareWebSocket();
-}
 
 function handleICECandidateEvent(event) {
 
@@ -343,7 +313,6 @@ function newICECandidateMessage(msg) {
     var candidate = msg.candidate;
 
     localPC.addIceCandidate(candidate).catch(function (err) {
-        alert(err.name + ": " + err.message + "\n\n in newICECandidateMessage()");
         console.log(err);
     });
 }
@@ -377,7 +346,6 @@ function redirect() {
             window.location.href = "/home?user=" + userName;
         }
     });
-
 }
 
 

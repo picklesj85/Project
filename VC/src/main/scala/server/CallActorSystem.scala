@@ -6,8 +6,11 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import DefaultJsonProtocol._
+
 import scala.concurrent.duration._
 import server._
+
+import scala.util.Random
 
 
 
@@ -70,7 +73,7 @@ class RoomModerator(room: Room) extends Actor with ActorLogging with MyJsonProto
 
 object OpenRooms {
 
-  var IDcount = 1000
+  val Max = 1000000
 
   var openRooms: Map[Int, Room] = Map.empty[Int, Room]
 
@@ -84,9 +87,13 @@ object OpenRooms {
   }
 
   def createRoom()(implicit actorSystem: ActorSystem) = {
-    IDcount += 1
-    val newRoom = Room(IDcount, actorSystem)
-    openRooms += IDcount -> newRoom
+    var ID = 0
+    do {
+      ID = Random.nextInt(Max)
+    } while (openRooms.contains(ID)) // generate a random positive ID and make sure it's not in use
+
+    val newRoom = Room(ID, actorSystem)
+    openRooms += ID -> newRoom
     newRoom
   }
 

@@ -17,18 +17,18 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
   var contacts: Set[String] = _
   var pending: Set[String] = _
 
-  if (UserManager.onCall.contains(userName)) UserManager.onCall -= userName // no longer on a call so remove
+  if (UserManager.onCall.contains(userName.toLowerCase)) UserManager.onCall -= userName.toLowerCase // no longer on a call so remove
 
   override def receive = {
 
     case user: User =>
-      if (!UserManager.loggedIn.contains(userName))  { // user has not authenticated
+      if (!UserManager.loggedIn.contains(userName.toLowerCase))  { // user has not authenticated
         self ! PoisonPill
       } else {
         thisUser = user.actorRef
         updateContacts
-        UserManager.onlineUsers += userName -> thisUser
-        UserManager.userActors += userName -> self
+        UserManager.onlineUsers += userName.toLowerCase -> thisUser
+        UserManager.userActors += userName.toLowerCase -> self
         sendUpdate
         system.scheduler.scheduleOnce(3000.millis, self, Poll) // initiate timer system to update who's online
       }
@@ -38,9 +38,9 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
     case message: WrappedMessage => message.data match {
 
       case "logout" =>
-        UserManager.onlineUsers -= userName
-        UserManager.loggedIn -= userName
-        UserManager.userActors -= userName
+        UserManager.onlineUsers -= userName.toLowerCase()
+        UserManager logout userName.toLowerCase()
+        UserManager.userActors -= userName.toLowerCase()
         self ! PoisonPill
 
       case "createRoom" =>
@@ -48,20 +48,20 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
         thisUser ! WrappedMessage(RoomNumber("roomNumber", room.roomID).toJson.prettyPrint)
 
       case call if call.take(4) == "call" =>
-        val callee = call.drop(4) // name of user to call
+        val callee = call.drop(4).toLowerCase // name of user to call
         val room = OpenRooms.createRoom().roomID // room id for call
         UserManager.onlineUsers(callee) ! WrappedMessage(ReceiveCall("receiveCall", userName, room).toJson.prettyPrint) // send call request to callee
         thisUser ! WrappedMessage(SendCall("sendCall", room).toJson.prettyPrint)
 
       case accept if accept.take(8) == "accepted" =>
-        val caller = accept.drop(8)
+        val caller = accept.drop(8).toLowerCase
         UserManager.onlineUsers(caller) ! WrappedMessage(Accepted("accepted").toJson.prettyPrint)
 
       case reject if reject.take(8) == "rejected" =>
-        val caller = reject.drop(8)
+        val caller = reject.drop(8).toLowerCase
         UserManager.onlineUsers(caller) ! WrappedMessage(Rejected("rejected").toJson.prettyPrint)
 
-      case "onCall" => UserManager.onCall += userName
+      case "onCall" => UserManager.onCall += userName.toLowerCase
 
       case search if search.take(6) == "search" =>
         val connection = DBConnector.connect
@@ -70,9 +70,9 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
 
       case respond if respond.take(7) == "respond" => // full string eg respondacceptjames or respondrejectjames
         val connection = DBConnector.connect
-        val requestor = respond.drop(13)
+        val requestor = respond.drop(13).toLowerCase
         if (respond.substring(7, 13) == "accept") {
-          DBConnector.newContact(requestor, userName, connection) // accepted so crete new contact
+          DBConnector.newContact(requestor, userName.toLowerCase, connection) // accepted so crete new contact
           if (available.contains(requestor)) UserManager.userActors(requestor) ! Update // let the requestor know you have accepted
         } else {
           DBConnector.deletePending(requestor, userName, connection) // contact request rejected so just delete the pending request
@@ -81,9 +81,9 @@ class OnlineUser(userName: String) extends Actor with ActorLogging with MyJsonPr
 
 
       case request if request.take(7) == "request" =>
-        val requestee = request.drop(7)
+        val requestee = request.drop(7).toLowerCase
         val connection = DBConnector.connect
-        DBConnector.newPendingContact(userName, requestee, connection)
+        DBConnector.newPendingContact(userName.toLowerCase, requestee, connection)
         if (available.contains(requestee)) UserManager.userActors(requestee) ! Update // let the requestee know they have a new request
         updateContacts
 

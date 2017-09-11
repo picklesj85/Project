@@ -1,6 +1,6 @@
 
 var user;
-var serverAddress = "172.20.10.3:8080";
+var serverAddress = "192.168.0.21:8080";
 var webSocket;
 var room;
 var online;
@@ -77,12 +77,14 @@ function startWebSocket() {
             case "receiveCall":
                 var caller = msg.user;
                 room = msg.room;
+                document.getElementById("ring").play();
                 if (confirm("Incoming call from " + caller + ". \n\nAccept call?")) {
                     msgServer("accepted" + caller);
                     msgServer("onCall");
                     window.location.href = "/room.html?roomID=" + room + "&userName=" + user;
                 } else {
                     msgServer("rejected" + caller);
+                    document.getElementById("ring").pause();
                 }
                 break;
 

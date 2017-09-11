@@ -124,6 +124,7 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
       user ! WrappedMessage("createRoom")
       assert(OpenRooms.openRooms.size == 1)
       client.expectMsg(WrappedMessage(RoomNumber("roomNumber", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      OpenRooms.deleteRoom(OpenRooms.openRooms.head._1)
     }
 
     "add another new user to onlineUsers" in {
@@ -154,22 +155,25 @@ class OnlineUserActorTest extends TestKit(ActorSystem("WebSocketSystemTest")) wi
 
     "create another room when requested" in {
       user2 ! WrappedMessage("createRoom")
-      assert(OpenRooms.openRooms.size == 2)
-      client2.expectMsg(WrappedMessage(RoomNumber("roomNumber", 2).toJson.prettyPrint))
+      assert(OpenRooms.openRooms.size == 1)
+      client2.expectMsg(WrappedMessage(RoomNumber("roomNumber", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      OpenRooms.deleteRoom(OpenRooms.openRooms.head._1)
     }
 
     "will send call details to both users" in {
       user ! WrappedMessage("calltest2")
-      assert(OpenRooms.openRooms.size == 3)
-      client2.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test1", 3).toJson.prettyPrint))
-      client.expectMsg(WrappedMessage(SendCall("sendCall", 3).toJson.prettyPrint))
+      assert(OpenRooms.openRooms.size == 1)
+      client2.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test1", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      client.expectMsg(WrappedMessage(SendCall("sendCall", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      OpenRooms.deleteRoom(OpenRooms.openRooms.head._1)
     }
 
     "will send call details to the other user" in {
       user2 ! WrappedMessage("calltest1")
-      assert(OpenRooms.openRooms.size == 4)
-      client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test2", 4).toJson.prettyPrint))
-      client2.expectMsg(WrappedMessage(SendCall("sendCall", 4).toJson.prettyPrint))
+      assert(OpenRooms.openRooms.size == 1)
+      client.expectMsg(WrappedMessage(ReceiveCall("receiveCall", "test2", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      client2.expectMsg(WrappedMessage(SendCall("sendCall", OpenRooms.openRooms.head._1).toJson.prettyPrint))
+      OpenRooms.deleteRoom(OpenRooms.openRooms.head._1)
     }
 
     "will send an accepted when receive accepted" in {

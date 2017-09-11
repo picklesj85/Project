@@ -12,32 +12,26 @@ class OpenRoomsTest extends FunSuite with BeforeAndAfterAll {
 
 
 
-  test("count increases when adding new room") {
-    val room = OpenRooms.createRoom()
-    assert(OpenRooms.IDcount == 1)
-    assert(room.roomID == 1)
-  }
+  test("generates random positive ID and deletes room") {
+    for (i <- 1 to 1000) {
+      val room = OpenRooms.createRoom()
+      assert(room.roomID >= 0)
+      assert(room.roomID < 1000000)
+    }
 
-  test("count increases again") {
-    val room = OpenRooms.createRoom()
-    assert(OpenRooms.IDcount == 2)
-    assert(room.roomID == 2)
   }
 
   test("rooms are being added to the map") {
-    assert(OpenRooms.openRooms.size == 2)
-    assert(OpenRooms.openRooms.keySet == Set(1, 2))
+    assert(OpenRooms.openRooms.size == 1000)
   }
 
   test("delete rooms") {
-    OpenRooms.deleteRoom(1)
-    assert(OpenRooms.openRooms.size == 1)
-  }
-
-  test("delete another room") {
-    OpenRooms.deleteRoom(2)
+    for (room <- OpenRooms.openRooms) {
+      OpenRooms.deleteRoom(room._1)
+    }
     assert(OpenRooms.openRooms.isEmpty)
   }
+
 
   test("find non existent room returns the roomError room") {
     val room = OpenRooms.findRoom(1)
@@ -45,11 +39,11 @@ class OpenRoomsTest extends FunSuite with BeforeAndAfterAll {
   }
 
   test("find room returns correct room") {
-    OpenRooms.createRoom()
+    OpenRooms.openRooms += 1000 -> Room(1000, system)
 
-    val room = OpenRooms.findRoom(3)
+    val room = OpenRooms.findRoom(1000)
 
     assert(OpenRooms.openRooms.size == 1)
-    assert(room.roomID == 3)
+    assert(room.roomID == 1000)
   }
 }
