@@ -1,6 +1,6 @@
 
 
-var IPAddress = "192.168.0.21:8080";
+var IPAddress = "172.20.10.3:8080";
 var userName;
 var roomID;
 var wsURL;
@@ -127,7 +127,6 @@ function receivedOffer(offer) {
             webSocketConnection.close();
             gotOffer = false;
             newPeerConnection();
-         //   prepareWebSocket();
             startWebSocket();
         }
     }, 500);

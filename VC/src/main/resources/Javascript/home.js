@@ -1,6 +1,6 @@
 
 var user;
-var serverAddress = "192.168.0.21:8080";
+var serverAddress = "172.20.10.3:8080";
 var webSocket;
 var room;
 var online;

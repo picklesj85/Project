@@ -319,7 +319,7 @@ class ServerPathTest extends FunSuite with Matchers with ScalatestRouteTest with
       assert(UserManager.onlineUsers.size == 1)
       assert(UserManager.onlineUsers.head._1 == "testuser")
 
-      Thread.sleep(3000)
+      Thread.sleep(3000) // wait 3 seconds to check poll loop working
       wsClient1.expectMessage(OnlineContacts("online", Set()).toJson.prettyPrint)
       wsClient1.expectMessage(OfflineContacts("offline", Set("anotherTest")).toJson.prettyPrint)
     }
